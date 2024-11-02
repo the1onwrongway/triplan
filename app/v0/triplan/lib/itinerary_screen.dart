@@ -15,15 +15,15 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   late String _selectedFilter;
 
   final List<Map<String, String>> upcomingTrips = [
-    {'title': 'Paris', 'date': 'Sep 10-15', 'image': 'assets/paris.jpg'},
-    {'title': 'Tokyo', 'date': 'Jan 5-10', 'image': 'assets/tokyo.jpg'},
-    {'title': 'Sydney', 'date': 'Feb 20-25', 'image': 'assets/sydney.jpg'},
+    {'title': 'Paris', 'date': 'Dec 10-15', 'image': 'assets/paris.jpg'},
+    {'title': 'Tokyo', 'date': 'Feb 5-10', 'image': 'assets/tokyo.jpg'},
+    {'title': 'Sydney', 'date': 'May 20-25', 'image': 'assets/sydney.jpg'},
   ];
 
   final List<Map<String, String>> pastTrips = [
-    {'title': 'Vietnam', 'date': 'Sep 1-5', 'image': 'assets/vietnam.jpg'},
-    {'title': 'Dubai', 'date': 'Oct 12-15', 'image': 'assets/dubai.jpg'},
     {'title': 'London', 'date': 'Nov 3-8', 'image': 'assets/london.jpg'},
+    {'title': 'Dubai', 'date': 'Oct 12-15', 'image': 'assets/dubai.jpg'},
+    {'title': 'Vietnam', 'date': 'Sep 1-5', 'image': 'assets/vietnam.jpg'},
   ];
 
   @override

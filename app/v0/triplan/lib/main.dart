@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Dashboard',     // Title for HomeScreenContent
     'Itineraries',   // Title for ItineraryScreen
     'Documents',     // Title for DocumentsScreen
-    'Emergency'      // Title for EmergencyContactsScreen
+    'Contacts'      // Title for EmergencyContactsScreen
   ];
 
   final List<Widget> _screens = [];
@@ -80,6 +80,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          if (_selectedIndex == 1 || _selectedIndex == 2 || _selectedIndex == 3) // Show + button for Itinerary, Documents, and Emergency tabs
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () {
+                // Implement add functionality
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Add button pressed in ${_screenTitles[_selectedIndex]}')),
+                );
+              },
+            ),
           const Padding(
             padding: EdgeInsets.only(right: 8.0),
             child: CircleAvatar(
@@ -156,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Itinerary'),
           BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Documents'),
-          BottomNavigationBarItem(icon: Icon(Icons.phone), label: 'Emergency')
+          BottomNavigationBarItem(icon: Icon(Icons.phone), label: 'Contacts')
         ],
       ),
     );
