@@ -1,10 +1,9 @@
-// itinerary_screen.dart
 import 'package:flutter/material.dart';
 import 'trip_card.dart'; // Import TripCard from the separate file
 
 class ItineraryScreen extends StatefulWidget {
   final bool showAllTrips;
-  final String initialFilter; // Added parameter for initial filter
+  final String initialFilter; // Parameter for initial filter
 
   ItineraryScreen({super.key, required this.showAllTrips, required this.initialFilter});
 
@@ -39,7 +38,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
         _selectedFilter == 'Upcoming' ? upcomingTrips : pastTrips;
 
     return Scaffold(
-
+      //appBar: AppBar(),
       body: Column(
         children: [
           // Filter headers

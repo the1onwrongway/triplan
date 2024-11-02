@@ -1,4 +1,3 @@
-// main.dart
 import 'package:flutter/material.dart';
 import 'itinerary_screen.dart';
 import 'trip_card.dart';
@@ -33,8 +32,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  String _currentFilter = 'Upcoming';
 
-  // List of screen titles for the AppBar
   final List<String> _screenTitles = [
     'Dashboard',     // Title for HomeScreenContent
     'Itineraries',   // Title for ItineraryScreen
@@ -42,17 +41,30 @@ class _HomeScreenState extends State<HomeScreen> {
     'Emergency'      // Title for EmergencyContactsScreen
   ];
 
-  // List of screens for each bottom navigation option
-  final List<Widget> _screens = [
-    HomeScreenContent(),
-    ItineraryScreen(showAllTrips: true, initialFilter: 'Upcoming'),
-    DocumentsScreen(), // Updated to use the correct DocumentsScreen
-    ContactsScreen()
-  ];
+  final List<Widget> _screens = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _screens.addAll([
+      HomeScreenContent(onNavigateToItinerary: _onNavigateToItinerary),
+      ItineraryScreen(showAllTrips: true, initialFilter: _currentFilter),
+      DocumentsScreen(), // Updated to use the correct DocumentsScreen
+      ContactsScreen()
+    ]);
+  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void _onNavigateToItinerary(int index, String filter) {
+    setState(() {
+      _selectedIndex = index;
+      _currentFilter = filter;
+      _screens[1] = ItineraryScreen(showAllTrips: true, initialFilter: _currentFilter);
     });
   }
 
@@ -67,37 +79,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: _selectedIndex == 2 // If DocumentsScreen is selected
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: () {
-                    // Handle filter action
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    // Handle add document action
-                  },
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(right: 8.0),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundImage: AssetImage('assets/profile.jpg'),
-                  ),
-                ),
-              ]
-            : [
-                const Padding(
-                  padding: EdgeInsets.only(right: 8.0),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundImage: AssetImage('assets/profile.jpg'),
-                  ),
-                ),
-              ],
+        actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 8.0),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundImage: AssetImage('assets/profile.jpg'),
+            ),
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -175,7 +165,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // HomeScreenContent shows the first trip only
 class HomeScreenContent extends StatelessWidget {
-  const HomeScreenContent({super.key});
+  final Function(int, String) onNavigateToItinerary;
+
+  const HomeScreenContent({super.key, required this.onNavigateToItinerary});
 
   @override
   Widget build(BuildContext context) {
@@ -191,10 +183,7 @@ class HomeScreenContent extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ItineraryScreen(showAllTrips: true, initialFilter: 'Upcoming')),
-                );
+                onNavigateToItinerary(1, 'Upcoming'); // Navigate to ItineraryScreen with 'Upcoming' filter
               },
               child: const Text('View All'),
             ),
@@ -207,10 +196,7 @@ class HomeScreenContent extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ItineraryScreen(showAllTrips: true, initialFilter: 'Past')),
-                );
+                onNavigateToItinerary(1, 'Past'); // Navigate to ItineraryScreen with 'Past' filter
               },
               child: const Text('View All'),
             ),
