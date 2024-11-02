@@ -3,6 +3,7 @@ import 'itinerary_screen.dart';
 import 'trip_card.dart';
 import 'documents.dart';
 import 'contacts_screen.dart';
+import 'create_new_trip_page.dart';
 
 void main() {
   runApp(TriplanApp());
@@ -80,11 +81,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
-          if (_selectedIndex == 1 || _selectedIndex == 2 || _selectedIndex == 3) // Show + button for Itinerary, Documents, and Emergency tabs
+          if (_selectedIndex == 1) // If the Itinerary tab is selected
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
-                // Implement add functionality
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateNewTripPage()),
+                ); // Navigate to the Create New Trip page
+              },
+            ),
+          if (_selectedIndex == 2 || _selectedIndex == 3) // For Documents and Contacts tabs
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Add button pressed in ${_screenTitles[_selectedIndex]}')),
                 );
@@ -134,8 +144,11 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.add),
               title: const Text('Create Itinerary'),
               onTap: () {
-                Navigator.pop(context);
-                // Handle create itinerary action
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateNewTripPage()),
+                ); // Navigate to the Create New Trip page
               },
             ),
             ListTile(

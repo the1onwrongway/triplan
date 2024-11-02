@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'trip_card.dart'; // Import TripCard from the separate file
+import 'create_modify_itinerary_page.dart'; // Import the new page
 
 class ItineraryScreen extends StatefulWidget {
   final bool showAllTrips;
@@ -38,7 +39,6 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
         _selectedFilter == 'Upcoming' ? upcomingTrips : pastTrips;
 
     return Scaffold(
-      //appBar: AppBar(),
       body: Column(
         children: [
           // Filter headers
@@ -81,12 +81,27 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: displayedTrips.map((trip) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: TripCard(
-                      title: trip['title']!,
-                      date: trip['date']!,
-                      imagePath: trip['image']!,
+                  return GestureDetector(
+                    onTap: () {
+                      if (trip['title'] == 'Tokyo') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreateModifyItineraryPage(
+                              title: 'Tokyo Drift',
+                              dates: 'Feb 5 - 10',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: TripCard(
+                        title: trip['title']!,
+                        date: trip['date']!,
+                        imagePath: trip['image']!,
+                      ),
                     ),
                   );
                 }).toList(),
