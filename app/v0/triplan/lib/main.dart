@@ -3,6 +3,7 @@ import 'itinerary_screen.dart';
 import 'trip_card.dart';
 import 'documents.dart';
 import 'contacts_screen.dart';
+import 'create_new_trip_page.dart'; // Import the CreateNewTripPage
 
 void main() {
   runApp(TriplanApp());
@@ -84,10 +85,18 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
-                // Implement add functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Add button pressed in ${_screenTitles[_selectedIndex]}')),
-                );
+                if (_selectedIndex == 1) {
+                  // Navigate to Create New Trip page when on Itinerary screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreateNewTripPage()),
+                  );
+                } else {
+                  // Implement other add functionality if needed
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Add button pressed in ${_screenTitles[_selectedIndex]}')),
+                  );
+                }
               },
             ),
           const Padding(
