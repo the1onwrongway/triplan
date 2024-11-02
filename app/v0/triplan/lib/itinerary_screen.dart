@@ -39,9 +39,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
         _selectedFilter == 'Upcoming' ? upcomingTrips : pastTrips;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_selectedFilter == 'Upcoming' ? 'Upcoming Trips' : 'Past Trips'),
-      ),
+
       body: Column(
         children: [
           // Filter headers
