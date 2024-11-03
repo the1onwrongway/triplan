@@ -7,6 +7,7 @@ import 'create_new_trip_page.dart';
 import 'profile_page.dart'; // Import the ProfilePage widget
 import 'paris_trip_details_page.dart'; // Import the ParisTripDetailsPage widget
 import 'upload_document_page.dart'; // Import the UploadDocumentPage widget
+import 'add_contact.dart'; // Import the AddContactPage widget
 
 void main() {
   runApp(TriplanApp());
@@ -109,9 +110,10 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Add button pressed in ${_screenTitles[_selectedIndex]}')),
-                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddContactPage()), // Navigate to AddContactPage
+                ); // Navigate to the Add Contact page
               },
             ),
           InkWell(
