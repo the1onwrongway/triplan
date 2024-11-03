@@ -6,6 +6,7 @@ import 'contacts_screen.dart';
 import 'create_new_trip_page.dart';
 import 'profile_page.dart'; // Import the ProfilePage widget
 import 'paris_trip_details_page.dart'; // Import the ParisTripDetailsPage widget
+import 'upload_document_page.dart'; // Import the UploadDocumentPage widget
 
 void main() {
   runApp(TriplanApp());
@@ -93,7 +94,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ); // Navigate to the Create New Trip page
               },
             ),
-          if (_selectedIndex == 2 || _selectedIndex == 3) // For Documents and Contacts tabs
+          if (_selectedIndex == 2) // If the Documents tab is selected
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () {
+                // Navigate to the Upload Document page when add button is pressed
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UploadDocumentPage()),
+                ); // Navigate to the Upload Document page
+              },
+            ),
+          if (_selectedIndex == 3) // For Contacts tab
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
@@ -165,8 +177,12 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.upload_file),
               title: const Text('Upload Documents'),
               onTap: () {
-                Navigator.pop(context);
-                // Handle upload documents action
+                Navigator.pop(context); // Close the drawer
+                // Navigate to the Upload Document page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UploadDocumentPage()),
+                ); // Navigate to the Upload Document page
               },
             ),
             ListTile(
