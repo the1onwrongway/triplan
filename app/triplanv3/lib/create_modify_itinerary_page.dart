@@ -20,9 +20,10 @@ class _CreateModifyItineraryPageState extends State<CreateModifyItineraryPage> {
   };
 
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController locationController = TextEditingController(); // Added location controller
   final TextEditingController dateController = TextEditingController();
   final TextEditingController timeController = TextEditingController();
-  final TextEditingController locationController = TextEditingController(); // Added location controller
+  final TextEditingController costController = TextEditingController(); // Added cost controller
   final TextEditingController notesController = TextEditingController();
 
   @override
@@ -97,6 +98,11 @@ class _CreateModifyItineraryPageState extends State<CreateModifyItineraryPage> {
                           TextFormField(
                             controller: locationController, // Location field
                             decoration: InputDecoration(labelText: 'Location'),
+                          ),
+                          SizedBox(height: 16),
+                          TextFormField(
+                            controller: costController, // Cost field
+                            decoration: InputDecoration(labelText: 'Cost'),
                           ),
                           SizedBox(height: 16),
                           TextFormField(
