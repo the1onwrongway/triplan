@@ -4,10 +4,11 @@ import 'trip_card.dart';
 import 'documents.dart';
 import 'contacts_screen.dart';
 import 'create_new_trip_page.dart';
-import 'profile_page.dart'; // Import the ProfilePage widget
-import 'paris_trip_details_page.dart'; // Import the ParisTripDetailsPage widget
-import 'upload_document_page.dart'; // Import the UploadDocumentPage widget
-import 'add_contact.dart'; // Import the AddContactPage widget
+import 'profile_page.dart';
+import 'paris_trip_details_page.dart';
+import 'upload_document_page.dart';
+import 'add_contact.dart';
+import 'expenses_page.dart'; // Import the ExpensesPage widget
 
 void main() {
   runApp(TriplanApp());
@@ -38,13 +39,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _currentFilter = 'Upcoming';
+  String selectedTrip = 'Vietnam Trip'; // Default selected trip
 
   final List<String> _screenTitles = [
-    'Dashboard',     // Title for HomeScreenContent
-    'Itineraries',   // Title for ItineraryScreen
-    'Documents',     // Title for DocumentsScreen
-    'Contacts'       // Title for EmergencyContactsScreen
+    'Dashboard',
+    'Itineraries',
+    'Documents',
+    'Contacts',
+    'Expenses' // Title for ExpensesPage
   ];
+
+  final List<String> trips = ['Vietnam Trip', 'Paris Trip', 'Tokyo Trip'];
 
   final List<Widget> _screens = [];
 
@@ -54,8 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _screens.addAll([
       HomeScreenContent(onNavigateToItinerary: _onNavigateToItinerary),
       ItineraryScreen(showAllTrips: true, initialFilter: _currentFilter),
-      DocumentsScreen(), // Updated to use the correct DocumentsScreen
-      ContactsScreen()
+      DocumentsScreen(),
+      ContactsScreen(),
+      ExpensesScreen() // Add ExpensesPage to the list of screens
     ]);
   }
 
@@ -77,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_screenTitles[_selectedIndex]), // Dynamic title
+        title: Text(_screenTitles[_selectedIndex]),
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -85,42 +91,124 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
-          if (_selectedIndex == 1) // If the Itinerary tab is selected
+          if (_selectedIndex == 1)
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => CreateNewTripPage()),
-                ); // Navigate to the Create New Trip page
+                );
               },
             ),
-          if (_selectedIndex == 2) // If the Documents tab is selected
+          if (_selectedIndex == 2)
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
-                // Navigate to the Upload Document page when add button is pressed
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => UploadDocumentPage()),
-                ); // Navigate to the Upload Document page
+                );
               },
             ),
-          if (_selectedIndex == 3) // For Contacts tab
+          if (_selectedIndex == 3)
             IconButton(
               icon: Icon(Icons.add),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AddContactPage()), // Navigate to AddContactPage
-                ); // Navigate to the Add Contact page
+                  MaterialPageRoute(builder: (context) => AddContactPage()),
+                );
+              },
+            ),
+          // Add Expense Button
+          if (_selectedIndex == 4)
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    String selectedTrip = trips[0]; // Default selected trip
+                    TextEditingController dateController = TextEditingController();
+                    TextEditingController expenseNameController = TextEditingController();
+                    TextEditingController categoryController = TextEditingController();
+                    TextEditingController amountController = TextEditingController();
+
+                    return Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Add New Expense',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          DropdownButton<String>(
+                            value: selectedTrip,
+                            items: trips.map((String trip) {
+                              return DropdownMenuItem<String>(
+                                value: trip,
+                                child: Text(trip),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedTrip = newValue!;
+                              });
+                            },
+                          ),
+                          TextField(
+                            controller: expenseNameController,
+                            decoration: InputDecoration(labelText: 'Expense Name'),
+                          ),
+                          TextField(
+                            controller: categoryController,
+                            decoration: InputDecoration(labelText: 'Category'),
+                          ),
+                          TextField(
+                            controller: dateController,
+                            decoration: InputDecoration(labelText: 'Date'),
+                            onTap: () async {
+                              FocusScope.of(context).requestFocus(FocusNode());
+                              DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2101),
+                              );
+                              if (pickedDate != null) {
+                                setState(() {
+                                  dateController.text = "${pickedDate.toLocal()}".split(' ')[0];
+                                });
+                              }
+                            },
+                          ),
+                          TextField(
+                            controller: amountController,
+                            decoration: InputDecoration(labelText: 'Amount (\$)'),
+                            keyboardType: TextInputType.number,
+                          ),
+                          SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () {
+                              // Add logic to handle expense addition
+                              Navigator.pop(context);
+                            },
+                            child: Text('Add Expense'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
               },
             ),
           InkWell(
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfilePage()), // Navigate to ProfilePage
+                MaterialPageRoute(builder: (context) => ProfilePage()),
               );
             },
             child: const Padding(
@@ -150,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () {
-                        Navigator.pop(context); // Closes the drawer
+                        Navigator.pop(context);
                       },
                     ),
                     const Text(
@@ -168,23 +256,22 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.add),
               title: const Text('Create Itinerary'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => CreateNewTripPage()),
-                ); // Navigate to the Create New Trip page
+                );
               },
             ),
             ListTile(
               leading: const Icon(Icons.upload_file),
               title: const Text('Upload Documents'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
-                // Navigate to the Upload Document page
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => UploadDocumentPage()),
-                ); // Navigate to the Upload Document page
+                );
               },
             ),
             ListTile(
@@ -192,7 +279,6 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('View Saved Places'),
               onTap: () {
                 Navigator.pop(context);
-                // Handle view saved places action
               },
             ),
           ],
@@ -207,7 +293,8 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Itinerary'),
           BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Documents'),
-          BottomNavigationBarItem(icon: Icon(Icons.phone), label: 'Contacts')
+          BottomNavigationBarItem(icon: Icon(Icons.phone), label: 'Contacts'),
+          BottomNavigationBarItem(icon: Icon(Icons.money), label: 'Expenses') // Add the new tab
         ],
       ),
     );
@@ -231,7 +318,6 @@ class HomeScreenContent extends StatelessWidget {
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () {
-              // Navigate to Paris Trip Details page when the Paris card is clicked
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ParisTripDetailsPage()),
@@ -243,7 +329,7 @@ class HomeScreenContent extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                onNavigateToItinerary(1, 'Upcoming'); // Navigate to ItineraryScreen with 'Upcoming' filter
+                onNavigateToItinerary(1, 'Upcoming');
               },
               child: const Text('View All'),
             ),
@@ -256,7 +342,7 @@ class HomeScreenContent extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                onNavigateToItinerary(1, 'Past'); // Navigate to ItineraryScreen with 'Past' filter
+                onNavigateToItinerary(1, 'Past');
               },
               child: const Text('View All'),
             ),
