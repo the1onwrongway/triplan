@@ -36,7 +36,7 @@ export default async function SharePage({ params }: SharePageProps) {
                 </p>
                 {trip.summary && <p className="mt-4 max-w-2xl text-muted-foreground">{trip.summary}</p>}
             </div>
-            <Button variant="outline" className="w-full shrink-0 md:w-auto" disabled>
+            <Button variant="outline" className="w-full shrink-0 md:w-auto">
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
             </Button>
