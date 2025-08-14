@@ -1,28 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true); // <-- loading until session is checked
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        router.replace("/dashboard"); // use replace to avoid history back-loop
+      } else {
+        setLoading(false); // show login form only after session check
+      }
+    };
+
+    checkSession();
+
+    // optional: listen to auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) router.replace("/dashboard");
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      //alert("Login successful!");
-      router.push("/dashboard");
-    } catch (err) {
-      setError(err.message);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    } else if (data.user) {
+      router.replace("/dashboard");
     }
   };
+
+  if (loading) return <div className="p-6 text-center">Checking session...</div>;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -30,7 +55,9 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Travel Agency Login
         </h1>
+
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -42,6 +69,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+              required
             />
           </div>
 
@@ -55,6 +83,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+              required
             />
           </div>
 
