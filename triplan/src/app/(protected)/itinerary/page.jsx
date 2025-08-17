@@ -41,15 +41,14 @@ export default function ItineraryPage() {
       if (tripsError) console.error(tripsError);
       else setTrips(tripsData || []);
 
-      // Fetch all vendors for this agency
+      // Fetch all vendors for this agency including phone
       const { data: vendorsData, error: vendorsError } = await supabase
         .from("vendors")
-        .select("id, name, type")
+        .select("id, name, type, phone, address1")
         .eq("agency_id", profile.id);
       if (vendorsError) console.error(vendorsError);
       else {
         setVendors(vendorsData || []);
-        // Extract distinct types
         const types = Array.from(new Set(vendorsData.map((v) => v.type)));
         setActivityTypes(types);
       }
@@ -77,14 +76,37 @@ export default function ItineraryPage() {
     setActivities(tempActivities);
   }, [selectedTrip]);
 
+  // Whenever vendor_id changes, update contact_name and contact_phone automatically
+  useEffect(() => {
+    if (!activityForm.vendor_id) return;
+    const selectedVendor = vendors.find(
+      (v) => String(v.id) === String(activityForm.vendor_id)
+    );
+    if (selectedVendor) {
+      setActivityForm((prev) => ({
+        ...prev,
+        contact_name: selectedVendor.name,
+        contact_phone: selectedVendor.phone,
+      }));
+    }
+  }, [activityForm.vendor_id, vendors]);
+
   const handleActivityChange = (e) => {
     const { name, value } = e.target;
-    setActivityForm({ ...activityForm, [name]: value });
 
-    // Reset vendor if activity type changes
+    // If type changes, reset vendor info
     if (name === "type") {
-      setActivityForm((prev) => ({ ...prev, vendor_id: "" }));
+      setActivityForm((prev) => ({
+        ...prev,
+        type: value,
+        vendor_id: "",
+        contact_name: "",
+        contact_phone: "",
+      }));
+      return;
     }
+
+    setActivityForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveActivity = (day) => {
@@ -136,9 +158,7 @@ export default function ItineraryPage() {
   };
 
   // Filter vendors based on selected type
-  const filteredVendors = vendors.filter(
-    (v) => v.type === activityForm.type
-  );
+  const filteredVendors = vendors.filter((v) => v.type === activityForm.type);
 
   return (
     <div className="p-6">
@@ -196,7 +216,6 @@ export default function ItineraryPage() {
                   />
                 </div>
 
-                {/* Activity Type Dropdown */}
                 <div>
                   <label className="block mb-1">Type *</label>
                   <select
@@ -236,7 +255,6 @@ export default function ItineraryPage() {
                   />
                 </div>
 
-                {/* Vendor Dropdown filtered by type */}
                 <div>
                   <label className="block mb-1">Vendor *</label>
                   <select
@@ -264,50 +282,27 @@ export default function ItineraryPage() {
                     className="border p-2 w-full"
                   />
                 </div>
+
                 <div>
                   <label className="block mb-1">Contact Name</label>
                   <input
                     type="text"
                     name="contact_name"
                     value={activityForm.contact_name || ""}
-                    onChange={handleActivityChange}
                     className="border p-2 w-full"
+                    readOnly
                   />
                 </div>
+
                 <div>
                   <label className="block mb-1">Contact Phone</label>
                   <input
                     type="text"
                     name="contact_phone"
                     value={activityForm.contact_phone || ""}
-                    onChange={handleActivityChange}
                     className="border p-2 w-full"
+                    readOnly
                   />
-                </div>
-
-                {/* PDF Upload */}
-                <div>
-                  <label className="block mb-1">Upload PDFs (Tickets, Vouchers)</label>
-                  <input
-                    type="file"
-                    name="pdfs"
-                    multiple
-                    accept="application/pdf"
-                    onChange={(e) => {
-                      setActivityForm({
-                        ...activityForm,
-                        pdfs: e.target.files ? Array.from(e.target.files) : [],
-                      });
-                    }}
-                    className="border p-2 w-full"
-                  />
-                  {activityForm.pdfs && activityForm.pdfs.length > 0 && (
-                    <ul className="mt-2 text-sm text-gray-600">
-                      {activityForm.pdfs.map((file, idx) => (
-                        <li key={idx}>{file.name}</li>
-                      ))}
-                    </ul>
-                  )}
                 </div>
               </div>
 
@@ -354,13 +349,9 @@ export default function ItineraryPage() {
                   <p className="text-sm">
                     {act.type} | {act.time}
                   </p>
-                  {act.pdfs && act.pdfs.length > 0 && (
-                    <ul className="text-sm text-gray-600 mt-1">
-                      {act.pdfs.map((file, idx) => (
-                        <li key={idx}>{file.name}</li>
-                      ))}
-                    </ul>
-                  )}
+                  <p className="text-sm text-gray-600">
+                    Contact: {act.contact_name} | {act.contact_phone}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => handleEditActivity(day, act)}>
