@@ -12,10 +12,13 @@ export default function ItineraryPage() {
   const [showFormForDay, setShowFormForDay] = useState(null);
   const [activityForm, setActivityForm] = useState({});
   const [editingActivity, setEditingActivity] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [activityTypes, setActivityTypes] = useState([]);
+  const [agencyId, setAgencyId] = useState(null);
 
-  // Fetch trips for the logged-in agency
+  // Fetch agency profile, trips, and vendors
   useEffect(() => {
-    const fetchTrips = async () => {
+    const fetchData = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -28,16 +31,31 @@ export default function ItineraryPage() {
         .single();
       if (!profile) return;
 
-      const { data, error } = await supabase
+      setAgencyId(profile.id);
+
+      // Fetch trips
+      const { data: tripsData, error: tripsError } = await supabase
         .from("trips")
         .select("id, trip_name, start_date, end_date")
         .eq("agency_id", profile.id);
+      if (tripsError) console.error(tripsError);
+      else setTrips(tripsData || []);
 
-      if (error) console.error(error);
-      else setTrips(data || []);
+      // Fetch all vendors for this agency
+      const { data: vendorsData, error: vendorsError } = await supabase
+        .from("vendors")
+        .select("id, name, type")
+        .eq("agency_id", profile.id);
+      if (vendorsError) console.error(vendorsError);
+      else {
+        setVendors(vendorsData || []);
+        // Extract distinct types
+        const types = Array.from(new Set(vendorsData.map((v) => v.type)));
+        setActivityTypes(types);
+      }
     };
 
-    fetchTrips();
+    fetchData();
   }, []);
 
   // Generate day blocks whenever a trip is selected
@@ -62,10 +80,14 @@ export default function ItineraryPage() {
   const handleActivityChange = (e) => {
     const { name, value } = e.target;
     setActivityForm({ ...activityForm, [name]: value });
+
+    // Reset vendor if activity type changes
+    if (name === "type") {
+      setActivityForm((prev) => ({ ...prev, vendor_id: "" }));
+    }
   };
 
   const handleSaveActivity = (day) => {
-    // Validation: mandatory fields
     const requiredFields = ["title", "type", "time", "vendor_id"];
     for (let field of requiredFields) {
       if (!activityForm[field] || activityForm[field].trim() === "") {
@@ -112,6 +134,11 @@ export default function ItineraryPage() {
       setShowFormForDay(null);
     }
   };
+
+  // Filter vendors based on selected type
+  const filteredVendors = vendors.filter(
+    (v) => v.type === activityForm.type
+  );
 
   return (
     <div className="p-6">
@@ -168,16 +195,25 @@ export default function ItineraryPage() {
                     className="border p-2 w-full"
                   />
                 </div>
+
+                {/* Activity Type Dropdown */}
                 <div>
                   <label className="block mb-1">Type *</label>
-                  <input
-                    type="text"
+                  <select
                     name="type"
                     value={activityForm.type || ""}
                     onChange={handleActivityChange}
                     className="border p-2 w-full"
-                  />
+                  >
+                    <option value="">-- Select Type --</option>
+                    {activityTypes.map((type, idx) => (
+                      <option key={idx} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
                   <label className="block mb-1">Time *</label>
                   <input
@@ -188,6 +224,7 @@ export default function ItineraryPage() {
                     className="border p-2 w-full"
                   />
                 </div>
+
                 <div>
                   <label className="block mb-1">Google Maps Link</label>
                   <input
@@ -198,16 +235,25 @@ export default function ItineraryPage() {
                     className="border p-2 w-full"
                   />
                 </div>
+
+                {/* Vendor Dropdown filtered by type */}
                 <div>
                   <label className="block mb-1">Vendor *</label>
-                  <input
-                    type="text"
+                  <select
                     name="vendor_id"
                     value={activityForm.vendor_id || ""}
                     onChange={handleActivityChange}
                     className="border p-2 w-full"
-                  />
+                  >
+                    <option value="">-- Select Vendor --</option>
+                    {filteredVendors.map((vendor) => (
+                      <option key={vendor.id} value={vendor.id}>
+                        {vendor.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
                   <label className="block mb-1">Cost</label>
                   <input
