@@ -76,7 +76,7 @@ export default function ItineraryPage() {
     setActivities(tempActivities);
   }, [selectedTrip]);
 
-  // Whenever vendor_id changes, update contact_name and contact_phone automatically
+  // Autofill contact info when vendor changes
   useEffect(() => {
     if (!activityForm.vendor_id) return;
     const selectedVendor = vendors.find(
@@ -304,6 +304,35 @@ export default function ItineraryPage() {
                     readOnly
                   />
                 </div>
+
+                {/* PDF Upload */}
+                <div className="col-span-2">
+                  <label className="block mb-1">
+                    Upload PDFs (Tickets, Vouchers)
+                  </label>
+                  <input
+                    type="file"
+                    name="pdfs"
+                    multiple
+                    accept="application/pdf"
+                    onChange={(e) => {
+                      setActivityForm({
+                        ...activityForm,
+                        pdfs: e.target.files
+                          ? Array.from(e.target.files)
+                          : [],
+                      });
+                    }}
+                    className="border p-2 w-full"
+                  />
+                  {activityForm.pdfs && activityForm.pdfs.length > 0 && (
+                    <ul className="mt-2 text-sm text-gray-600">
+                      {activityForm.pdfs.map((file, idx) => (
+                        <li key={idx}>{file.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-2 mt-4">
@@ -339,30 +368,47 @@ export default function ItineraryPage() {
 
           {/* Activities List */}
           <div className="space-y-2">
-            {activities[day]?.map((act) => (
-              <div
-                key={act.id}
-                className="flex justify-between items-center bg-white p-2 rounded border"
-              >
-                <div>
-                  <p className="font-semibold">{act.title}</p>
-                  <p className="text-sm">
-                    {act.type} | {act.time}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Contact: {act.contact_name} | {act.contact_phone}
-                  </p>
+            {activities[day]?.map((act) => {
+              const vendor = vendors.find(
+                (v) => String(v.id) === String(act.vendor_id)
+              );
+              const vendorName = vendor ? vendor.name : "";
+              const vendorType = vendor ? vendor.type : "";
+
+              return (
+                <div
+                  key={act.id}
+                  className="flex justify-between items-center bg-white p-2 rounded border"
+                >
+                  <div>
+                    <p className="font-semibold">{act.title}</p>
+                    <p className="text-sm">
+                      {vendorName} | {vendorType} | {act.time}
+                    </p>
+                    {act.pdfs && act.pdfs.length > 0 && (
+                      <ul className="text-sm text-gray-600 mt-1">
+                        {act.pdfs.map((file, idx) => (
+                          <li key={idx}>{file.name}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-sm text-gray-600">
+                      Contact: {act.contact_name} | {act.contact_phone}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEditActivity(day, act)}>
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteActivity(day, act.id)}
+                    >
+                      <Trash2 size={16} className="text-red-600" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleEditActivity(day, act)}>
-                    <Pencil size={16} />
-                  </button>
-                  <button onClick={() => handleDeleteActivity(day, act.id)}>
-                    <Trash2 size={16} className="text-red-600" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
