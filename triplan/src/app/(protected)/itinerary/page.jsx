@@ -1,160 +1,334 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 export default function ItineraryPage() {
-  const [itineraries, setItineraries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingItinerary, setEditingItinerary] = useState(null);
+  const [trips, setTrips] = useState([]);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [days, setDays] = useState([]);
+  const [activities, setActivities] = useState({});
+  const [showFormForDay, setShowFormForDay] = useState(null);
+  const [activityForm, setActivityForm] = useState({});
+  const [editingActivity, setEditingActivity] = useState(null);
 
-  const [form, setForm] = useState({
-    trip_name: "",
-    day: "",
-    activity: "",
-  });
-
-  // Fetch itineraries
-  const fetchItineraries = async () => {
-  const { data, error } = await supabase.from("itineraries").select("*");
-  if (error) console.error("Error fetching itineraries:", error.message);
-  else setItineraries(data);
-  setLoading(false);
-};
+  // Fetch trips for the logged-in agency
   useEffect(() => {
-    fetchItineraries();
+    const fetchTrips = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+      if (!profile) return;
+
+      const { data, error } = await supabase
+        .from("trips")
+        .select("id, trip_name, start_date, end_date")
+        .eq("agency_id", profile.id);
+
+      if (error) console.error(error);
+      else setTrips(data || []);
+    };
+
+    fetchTrips();
   }, []);
 
-  // Handle input
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  // Generate day blocks whenever a trip is selected
+  useEffect(() => {
+    if (!selectedTrip) return;
 
-  // Save itinerary
-  const handleSave = async () => {
-    if (editingItinerary) {
-      await supabase.from("itineraries").update(form).eq("id", editingItinerary.id);
-    } else {
-      await supabase.from("itineraries").insert([form]);
+    const start = new Date(selectedTrip.start_date);
+    const end = new Date(selectedTrip.end_date);
+    const tempDays = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      tempDays.push(d.toISOString().slice(0, 10));
     }
-    setForm({ trip_name: "", day: "", activity: "" });
-    setEditingItinerary(null);
-    setShowForm(false);
-    fetchItineraries();
+    setDays(tempDays);
+
+    const tempActivities = {};
+    tempDays.forEach((day) => {
+      tempActivities[day] = activities[day] || [];
+    });
+    setActivities(tempActivities);
+  }, [selectedTrip]);
+
+  const handleActivityChange = (e) => {
+    const { name, value } = e.target;
+    setActivityForm({ ...activityForm, [name]: value });
   };
 
-  // Delete itinerary
-  const handleDelete = async (id) => {
-    await supabase.from("itineraries").delete().eq("id", id);
-    fetchItineraries();
+  const handleSaveActivity = (day) => {
+    // Validation: mandatory fields
+    const requiredFields = ["title", "type", "time", "vendor_id"];
+    for (let field of requiredFields) {
+      if (!activityForm[field] || activityForm[field].trim() === "") {
+        alert(`Please fill in the mandatory field: ${field}`);
+        return;
+      }
+    }
+
+    let updatedActivities = [...activities[day]];
+
+    if (editingActivity) {
+      updatedActivities = updatedActivities.map((act) =>
+        act.id === editingActivity.activity.id
+          ? { ...activityForm, id: act.id }
+          : act
+      );
+    } else {
+      updatedActivities.push({
+        ...activityForm,
+        id: Math.random().toString(36).substr(2, 9),
+      });
+    }
+
+    setActivities({ ...activities, [day]: updatedActivities });
+    setActivityForm({});
+    setShowFormForDay(null);
+    setEditingActivity(null);
   };
 
-  if (loading) return <div>Loading itineraries...</div>;
+  const handleEditActivity = (day, activity) => {
+    setActivityForm(activity);
+    setShowFormForDay(day);
+    setEditingActivity({ day, activity });
+  };
+
+  const handleDeleteActivity = (day, activityId) => {
+    const updatedActivities = activities[day].filter(
+      (act) => act.id !== activityId
+    );
+    setActivities({ ...activities, [day]: updatedActivities });
+    if (editingActivity?.activity?.id === activityId) {
+      setEditingActivity(null);
+      setActivityForm({});
+      setShowFormForDay(null);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Itineraries</h1>
-        <button
-          onClick={() => {
-            setForm({ trip_name: "", day: "", activity: "" });
-            setEditingItinerary(null);
-            setShowForm(true);
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Itinerary</h1>
+
+      {/* Trip Selector */}
+      <div className="mb-6">
+        <label className="block mb-1 font-semibold">Select Trip</label>
+        <select
+          className="border p-2 w-full"
+          value={selectedTrip?.id || ""}
+          onChange={(e) => {
+            const trip = trips.find((t) => t.id === e.target.value);
+            setSelectedTrip(trip || null);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
         >
-          <Plus size={16} /> New Itinerary
-        </button>
+          <option value="">-- Select Trip --</option>
+          {trips.map((trip) => (
+            <option key={trip.id} value={trip.id}>
+              {trip.trip_name} ({trip.start_date} → {trip.end_date})
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Table */}
-      <table className="w-full bg-white shadow rounded-lg overflow-hidden">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="px-4 py-2 text-left">Trip Name</th>
-            <th className="px-4 py-2 text-left">Day</th>
-            <th className="px-4 py-2 text-left">Activity</th>
-            <th className="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {itineraries.map((itinerary) => (
-            <tr key={itinerary.id} className="border-t">
-              <td className="px-4 py-2">{itinerary.trip_name}</td>
-              <td className="px-4 py-2">{itinerary.day}</td>
-              <td className="px-4 py-2">{itinerary.activity}</td>
-              <td className="px-4 py-2 flex gap-2">
+      {/* Day Blocks */}
+      {days.map((day) => (
+        <div key={day} className="mb-6 border rounded p-4 bg-gray-50">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-semibold">Day – {day}</h2>
+            <button
+              onClick={() => {
+                setShowFormForDay(showFormForDay === day ? null : day);
+                setActivityForm({});
+                setEditingActivity(null);
+              }}
+              className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1 rounded"
+            >
+              <Plus size={16} /> Add Activity
+            </button>
+          </div>
+
+          {/* Activity Form */}
+          {showFormForDay === day && (
+            <div className="mb-4 border p-4 rounded bg-white">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1">Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={activityForm.title || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Type *</label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={activityForm.type || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Time *</label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={activityForm.time || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Google Maps Link</label>
+                  <input
+                    type="text"
+                    name="maps_link"
+                    value={activityForm.maps_link || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Vendor *</label>
+                  <input
+                    type="text"
+                    name="vendor_id"
+                    value={activityForm.vendor_id || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Cost</label>
+                  <input
+                    type="number"
+                    name="cost"
+                    value={activityForm.cost || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Contact Name</label>
+                  <input
+                    type="text"
+                    name="contact_name"
+                    value={activityForm.contact_name || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    name="contact_phone"
+                    value={activityForm.contact_phone || ""}
+                    onChange={handleActivityChange}
+                    className="border p-2 w-full"
+                  />
+                </div>
+
+                {/* PDF Upload */}
+                <div>
+                  <label className="block mb-1">Upload PDFs (Tickets, Vouchers)</label>
+                  <input
+                    type="file"
+                    name="pdfs"
+                    multiple
+                    accept="application/pdf"
+                    onChange={(e) => {
+                      setActivityForm({
+                        ...activityForm,
+                        pdfs: e.target.files ? Array.from(e.target.files) : [],
+                      });
+                    }}
+                    className="border p-2 w-full"
+                  />
+                  {activityForm.pdfs && activityForm.pdfs.length > 0 && (
+                    <ul className="mt-2 text-sm text-gray-600">
+                      {activityForm.pdfs.map((file, idx) => (
+                        <li key={idx}>{file.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => handleSaveActivity(day)}
+                  className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  {editingActivity ? "Update Activity" : "Save Activity"}
+                </button>
+                {editingActivity && (
+                  <button
+                    onClick={() =>
+                      handleDeleteActivity(day, editingActivity.activity.id)
+                    }
+                    className="bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Delete
+                  </button>
+                )}
                 <button
                   onClick={() => {
-                    setForm(itinerary);
-                    setEditingItinerary(itinerary);
-                    setShowForm(true);
+                    setShowFormForDay(null);
+                    setActivityForm({});
+                    setEditingActivity(null);
                   }}
-                  className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded"
+                  className="border px-4 py-2 rounded"
                 >
-                  <Pencil size={14} />
+                  Cancel
                 </button>
-                <button
-                  onClick={() => handleDelete(itinerary.id)}
-                  className="p-2 bg-red-500 hover:bg-red-600 text-white rounded"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-lg font-semibold mb-4">
-              {editingItinerary ? "Edit Itinerary" : "New Itinerary"}
-            </h2>
-            <input
-              type="text"
-              name="trip_name"
-              placeholder="Trip Name"
-              value={form.trip_name}
-              onChange={handleChange}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="day"
-              placeholder="Day"
-              value={form.day}
-              onChange={handleChange}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <textarea
-              name="activity"
-              placeholder="Activity"
-              value={form.activity}
-              onChange={handleChange}
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-              >
-                {editingItinerary ? "Update" : "Save"}
-              </button>
+              </div>
             </div>
+          )}
+
+          {/* Activities List */}
+          <div className="space-y-2">
+            {activities[day]?.map((act) => (
+              <div
+                key={act.id}
+                className="flex justify-between items-center bg-white p-2 rounded border"
+              >
+                <div>
+                  <p className="font-semibold">{act.title}</p>
+                  <p className="text-sm">
+                    {act.type} | {act.time}
+                  </p>
+                  {act.pdfs && act.pdfs.length > 0 && (
+                    <ul className="text-sm text-gray-600 mt-1">
+                      {act.pdfs.map((file, idx) => (
+                        <li key={idx}>{file.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEditActivity(day, act)}>
+                    <Pencil size={16} />
+                  </button>
+                  <button onClick={() => handleDeleteActivity(day, act.id)}>
+                    <Trash2 size={16} className="text-red-600" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
