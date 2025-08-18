@@ -122,39 +122,48 @@ export default function ItineraryPage() {
 
   // Upload PDFs to Supabase storage and get public URLs
   const uploadPDFs = async (files, activityId) => {
-    if (!files || files.length === 0) return [];
+  if (!files || files.length === 0) return [];
 
-    const urls = [];
-    for (let file of files) {
-      const fileName = `${activityId}/${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
+  const urls = [];
+  for (let file of files) {
+    const fileName = `${activityId}/${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from("itinerary-pdfs")
+      .upload(fileName, file);
+
+    if (error) {
+      console.error("PDF Upload Error:", error);
+    } else {
+      // Get a signed URL valid for 7 days (you can change duration)
+      const { data: signed } = await supabase.storage
         .from("itinerary-pdfs")
-        .upload(fileName, file);
-      if (error) console.error("PDF Upload Error:", error);
-      else {
-        const { publicUrl } = supabase.storage
-          .from("itinerary-pdfs")
-          .getPublicUrl(fileName);
-        urls.push(publicUrl);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
+      if (signed?.signedUrl) {
+        urls.push(signed.signedUrl);
       }
     }
-    return urls;
-  };
+  }
+  return urls;
+};
 
   const handleSaveActivity = async (day) => {
     const requiredFields = ["title", "type", "time", "vendor_id"];
     for (let field of requiredFields) {
-      if (!activityForm[field] || activityForm[field].trim() === "") {
+      const val = activityForm[field];
+      if (val === undefined || val === null || (typeof val === "string" && val.trim() === "")) {
         alert(`Please fill in the mandatory field: ${field}`);
         return;
       }
     }
 
-    const activityId =
-      editingActivity?.activity?.id || uuidv4();
+    const activityId = editingActivity?.activity?.id || uuidv4();
 
-    // Upload PDFs and get URLs
-    const pdf_urls = await uploadPDFs(activityForm.pdfs, activityId);
+    // Upload new PDFs and merge with existing ones (if editing)
+    const newlyUploadedUrls = await uploadPDFs(activityForm.pdfs, activityId);
+    const pdf_urls = [
+      ...(activityForm.existing_pdfs || []),
+      ...newlyUploadedUrls,
+    ];
 
     const activityData = {
       id: activityId,
@@ -174,10 +183,7 @@ export default function ItineraryPage() {
     };
 
     if (editingActivity) {
-      await supabase
-        .from("itinerary")
-        .update(activityData)
-        .eq("id", activityId);
+      await supabase.from("itinerary").update(activityData).eq("id", activityId);
     } else {
       await supabase.from("itinerary").insert([activityData]);
     }
@@ -194,16 +200,19 @@ export default function ItineraryPage() {
   };
 
   const handleEditActivity = (day, activity) => {
-    setActivityForm(activity);
+    // Preserve existing URLs in a separate field and reset file input
+    setActivityForm({
+      ...activity,
+      pdfs: [],
+      existing_pdfs: activity.pdf_urls || [],
+    });
     setShowFormForDay(day);
     setEditingActivity({ day, activity });
   };
 
   const handleDeleteActivity = async (day, activityId) => {
     await supabase.from("itinerary").delete().eq("id", activityId);
-    const updatedActivities = activities[day].filter(
-      (act) => act.id !== activityId
-    );
+    const updatedActivities = activities[day].filter((act) => act.id !== activityId);
     setActivities({ ...activities, [day]: updatedActivities });
 
     if (editingActivity?.activity?.id === activityId) {
@@ -372,19 +381,56 @@ export default function ItineraryPage() {
                     onChange={(e) => {
                       setActivityForm({
                         ...activityForm,
-                        pdfs: e.target.files
-                          ? Array.from(e.target.files)
-                          : [],
+                        pdfs: e.target.files ? Array.from(e.target.files) : [],
                       });
                     }}
                     className="border p-2 w-full"
                   />
+
+                  {/* NEW: Show newly selected files (as before) */}
                   {activityForm.pdfs && activityForm.pdfs.length > 0 && (
                     <ul className="mt-2 text-sm text-gray-600">
                       {activityForm.pdfs.map((file, idx) => (
                         <li key={idx}>{file.name}</li>
                       ))}
                     </ul>
+                  )}
+
+                  {/* NEW: Show existing PDFs when editing */}
+                  {activityForm.existing_pdfs &&
+                  activityForm.existing_pdfs.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-sm font-medium">Existing PDFs</p>
+                      <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        {activityForm.existing_pdfs.map((url, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              PDF {idx + 1}
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActivityForm((prev) => ({
+                                  ...prev,
+                                  existing_pdfs: prev.existing_pdfs.filter(
+                                    (_, i) => i !== idx
+                                  ),
+                                }));
+                              }}
+                              className="text-red-500 hover:text-red-700"
+                              title="Remove PDF"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
               </div>
@@ -462,9 +508,7 @@ export default function ItineraryPage() {
                     <button onClick={() => handleEditActivity(day, act)}>
                       <Pencil size={16} />
                     </button>
-                    <button
-                      onClick={() => handleDeleteActivity(day, act.id)}
-                    >
+                    <button onClick={() => handleDeleteActivity(day, act.id)}>
                       <Trash2 size={16} className="text-red-600" />
                     </button>
                   </div>
