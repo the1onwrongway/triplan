@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 export default function ItineraryPage() {
   const [trips, setTrips] = useState([]);
@@ -57,7 +58,7 @@ export default function ItineraryPage() {
     fetchData();
   }, []);
 
-  // Generate day blocks whenever a trip is selected
+  // Generate day blocks & fetch activities whenever a trip is selected
   useEffect(() => {
     if (!selectedTrip) return;
 
@@ -69,12 +70,23 @@ export default function ItineraryPage() {
     }
     setDays(tempDays);
 
-    const tempActivities = {};
-    tempDays.forEach((day) => {
-      tempActivities[day] = activities[day] || [];
-    });
-    setActivities(tempActivities);
-  }, [selectedTrip]);
+    const fetchActivities = async () => {
+      const { data: acts, error } = await supabase
+        .from("itinerary")
+        .select("*")
+        .eq("trip_id", selectedTrip.id);
+      if (error) console.error(error);
+      else {
+        const grouped = {};
+        tempDays.forEach((day) => {
+          grouped[day] = acts.filter((a) => a.day === day) || [];
+        });
+        setActivities(grouped);
+      }
+    };
+
+    fetchActivities();
+  }, [selectedTrip?.id]);
 
   // Autofill contact info when vendor changes
   useEffect(() => {
@@ -94,7 +106,6 @@ export default function ItineraryPage() {
   const handleActivityChange = (e) => {
     const { name, value } = e.target;
 
-    // If type changes, reset vendor info
     if (name === "type") {
       setActivityForm((prev) => ({
         ...prev,
@@ -109,7 +120,28 @@ export default function ItineraryPage() {
     setActivityForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveActivity = (day) => {
+  // Upload PDFs to Supabase storage and get public URLs
+  const uploadPDFs = async (files, activityId) => {
+    if (!files || files.length === 0) return [];
+
+    const urls = [];
+    for (let file of files) {
+      const fileName = `${activityId}/${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from("itinerary-pdfs")
+        .upload(fileName, file);
+      if (error) console.error("PDF Upload Error:", error);
+      else {
+        const { publicUrl } = supabase.storage
+          .from("itinerary-pdfs")
+          .getPublicUrl(fileName);
+        urls.push(publicUrl);
+      }
+    }
+    return urls;
+  };
+
+  const handleSaveActivity = async (day) => {
     const requiredFields = ["title", "type", "time", "vendor_id"];
     for (let field of requiredFields) {
       if (!activityForm[field] || activityForm[field].trim() === "") {
@@ -118,20 +150,42 @@ export default function ItineraryPage() {
       }
     }
 
-    let updatedActivities = [...activities[day]];
+    const activityId =
+      editingActivity?.activity?.id || uuidv4();
+
+    // Upload PDFs and get URLs
+    const pdf_urls = await uploadPDFs(activityForm.pdfs, activityId);
+
+    const activityData = {
+      id: activityId,
+      trip_id: selectedTrip.id,
+      day,
+      title: activityForm.title,
+      type: activityForm.type,
+      time: activityForm.time,
+      maps_link: activityForm.maps_link || null,
+      vendor_id: activityForm.vendor_id,
+      cost: activityForm.cost || null,
+      contact_name: activityForm.contact_name || "",
+      contact_phone: activityForm.contact_phone || "",
+      pdf_urls,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
 
     if (editingActivity) {
-      updatedActivities = updatedActivities.map((act) =>
-        act.id === editingActivity.activity.id
-          ? { ...activityForm, id: act.id }
-          : act
-      );
+      await supabase
+        .from("itinerary")
+        .update(activityData)
+        .eq("id", activityId);
     } else {
-      updatedActivities.push({
-        ...activityForm,
-        id: Math.random().toString(36).substr(2, 9),
-      });
+      await supabase.from("itinerary").insert([activityData]);
     }
+
+    const updatedActivities = [...(activities[day] || [])];
+    const index = updatedActivities.findIndex((a) => a.id === activityId);
+    if (index >= 0) updatedActivities[index] = activityData;
+    else updatedActivities.push(activityData);
 
     setActivities({ ...activities, [day]: updatedActivities });
     setActivityForm({});
@@ -145,11 +199,13 @@ export default function ItineraryPage() {
     setEditingActivity({ day, activity });
   };
 
-  const handleDeleteActivity = (day, activityId) => {
+  const handleDeleteActivity = async (day, activityId) => {
+    await supabase.from("itinerary").delete().eq("id", activityId);
     const updatedActivities = activities[day].filter(
       (act) => act.id !== activityId
     );
     setActivities({ ...activities, [day]: updatedActivities });
+
     if (editingActivity?.activity?.id === activityId) {
       setEditingActivity(null);
       setActivityForm({});
@@ -157,7 +213,6 @@ export default function ItineraryPage() {
     }
   };
 
-  // Filter vendors based on selected type
   const filteredVendors = vendors.filter((v) => v.type === activityForm.type);
 
   return (
@@ -305,7 +360,6 @@ export default function ItineraryPage() {
                   />
                 </div>
 
-                {/* PDF Upload */}
                 <div className="col-span-2">
                   <label className="block mb-1">
                     Upload PDFs (Tickets, Vouchers)
@@ -366,7 +420,6 @@ export default function ItineraryPage() {
             </div>
           )}
 
-          {/* Activities List */}
           <div className="space-y-2">
             {activities[day]?.map((act) => {
               const vendor = vendors.find(
@@ -385,10 +438,19 @@ export default function ItineraryPage() {
                     <p className="text-sm">
                       {vendorName} | {vendorType} | {act.time}
                     </p>
-                    {act.pdfs && act.pdfs.length > 0 && (
+                    {act.pdf_urls && act.pdf_urls.length > 0 && (
                       <ul className="text-sm text-gray-600 mt-1">
-                        {act.pdfs.map((file, idx) => (
-                          <li key={idx}>{file.name}</li>
+                        {act.pdf_urls.map((url, idx) => (
+                          <li key={idx}>
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              PDF {idx + 1}
+                            </a>
+                          </li>
                         ))}
                       </ul>
                     )}
