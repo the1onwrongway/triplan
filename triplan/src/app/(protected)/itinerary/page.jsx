@@ -332,7 +332,7 @@ export default function ItineraryPage() {
           
           return [
             formattedTime,
-            act.title,
+            act.title, // Just the title, we'll add [PDF] link in didDrawCell
             act.type,
             vendorName,
             act.contact_name || '-',
@@ -369,17 +369,23 @@ export default function ItineraryPage() {
           },
           margin: { left: 14, right: 14 },
           didDrawCell: function(data) {
-            // Make activity names clickable if they have PDFs
+            // Add clickable [PDF] link after activity title if PDFs exist
             if (data.section === 'body' && data.column.index === 1) {
               const activityIndex = data.row.index;
               const activity = dayActivities[activityIndex];
               if (activity && activity.pdf_urls && activity.pdf_urls.length > 0) {
-                // Add clickable link to first PDF
+                // First draw the activity title normally
+                const titleWidth = doc.getTextWidth(activity.title);
                 const linkY = data.cell.y + data.cell.height / 2 + 2;
-                doc.setTextColor(52, 152, 219); // Blue for links
-                doc.textWithLink(activity.title, data.cell.x + 2, linkY, { 
+                
+                // Add the [PDF] link after the title
+                doc.setTextColor(52, 152, 219); // Blue for the link
+                doc.textWithLink(' [PDF]', data.cell.x + 2 + titleWidth + 2, linkY, { 
                   url: activity.pdf_urls[0] 
                 });
+                
+                // Reset text color back to normal
+                doc.setTextColor(...textColor);
               }
             }
           }
