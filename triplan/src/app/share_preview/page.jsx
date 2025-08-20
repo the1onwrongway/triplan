@@ -121,27 +121,43 @@ function SharePreviewContent() {
                     className="bg-white p-3 rounded border shadow-sm"
                   >
                     <p className="font-semibold">{act.title}</p>
-                    <p className="text-sm text-gray-700">
-                      {vendorName} | {vendorType} | {act.time}
-                    </p>
+                   <p className="text-sm text-gray-700">
+                    {vendorName} | {vendorType} | {act.time}
+                  </p>
 
-                    {/* Show PDFs as links (not interactive edit/delete) */}
-                    {act.pdf_urls && act.pdf_urls.length > 0 && (
-                      <ul className="text-sm text-blue-600 mt-2 space-y-1">
-                        {act.pdf_urls.map((url, idx) => (
-                          <li key={idx}>
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline"
-                            >
-                              PDF {idx + 1}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
+                  <div className="text-sm mt-1 flex flex-wrap items-center gap-2">
+                    {/* Google Maps Link */}
+                    {act.maps_link && (
+                      <a
+                        href={act.maps_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-600 underline"
+                      >
+                        📍 View on Map
+                      </a>
                     )}
+
+                    {/* Separator if both exist */}
+                    {act.maps_link && act.pdf_urls && act.pdf_urls.length > 0 && <span>|</span>}
+
+                    {/* Show PDFs as links */}
+                    {act.pdf_urls && act.pdf_urls.length > 0 && (
+                      <span className="text-blue-600">
+                        {act.pdf_urls.map((url, idx) => (
+                          <a
+                            key={idx}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline mr-2"
+                          >
+                            PDF {idx + 1}
+                          </a>
+                        ))}
+                      </span>
+                    )}
+                  </div>
 
                     <p className="text-sm text-gray-600 mt-1">
                       Contact: {act.contact_name} | {act.contact_phone}
