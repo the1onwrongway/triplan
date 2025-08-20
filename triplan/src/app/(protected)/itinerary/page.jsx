@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+
 export default function ItineraryPage() {
   const [trips, setTrips] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
@@ -452,23 +453,43 @@ export default function ItineraryPage() {
 
       {/* PDF Download Button */}
       {selectedTrip && (
-        <div className="mb-6">
-          <button
-            onClick={() =>
-              generateItineraryPDF(
-                agencyName,
-                clientName,
-                selectedTrip,
-                days,
-                activities
-              )
-            }
-            className="bg-purple-600 text-white px-4 py-2 rounded"
-          >
-            Download Itinerary as PDF
-          </button>
-        </div>
-      )}
+  <div className="mb-6 flex flex-wrap gap-3">
+    <button
+      onClick={() =>
+        generateItineraryPDF(
+          agencyName,
+          clientName,
+          selectedTrip,
+          days,
+          activities
+        )
+      }
+      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
+    >
+      📄 Download PDF
+    </button>
+
+    <button
+      onClick={() =>
+        window.open(`/share_preview?tripId=${selectedTrip?.id}`, '_blank')
+      }
+      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
+    >
+      🔗 Share Preview
+    </button>
+
+    <button
+      onClick={() =>
+        navigator.clipboard.writeText(
+          `${window.location.origin}/share_preview?tripId=${selectedTrip?.id}`
+        )
+      }
+      className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
+    >
+      📋 Copy Link
+    </button>
+  </div>
+)}
 
       {/* Day Blocks */}
       {days.map((day) => (
