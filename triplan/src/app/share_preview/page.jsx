@@ -288,46 +288,77 @@ function SharePreviewContent() {
       // Add the image to PDF
       pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight);
 
-      // Add clickable links for maps and PDFs
+      // Add clickable links for maps and PDFs - Enhanced version
       const links = element.querySelectorAll('a[href]');
+      const elementRect = element.getBoundingClientRect();
+      
       links.forEach((link) => {
         const rect = link.getBoundingClientRect();
-        const elementRect = element.getBoundingClientRect();
         
-        const x = ((rect.left - elementRect.left) * ratio) + margin;
-        const y = ((rect.top - elementRect.top) * ratio) + margin;
-        const width = (rect.width * ratio);
-        const height = (rect.height * ratio);
+        // Calculate position relative to the content element
+        const relativeX = rect.left - elementRect.left;
+        const relativeY = rect.top - elementRect.top;
         
-        // Add link annotation
-        if (rect.top < elementRect.bottom && rect.bottom > elementRect.top) {
-          pdf.link(x, y, width, height, { url: link.href });
+        // Convert to PDF coordinates with proper scaling
+        const pdfX = (relativeX / elementRect.width) * pdfWidth + margin;
+        const pdfY = (relativeY / elementRect.height) * pdfHeight + margin;
+        const pdfLinkWidth = (rect.width / elementRect.width) * pdfWidth;
+        const pdfLinkHeight = (rect.height / elementRect.height) * pdfHeight;
+        
+        // Ensure link is within the visible area
+        if (pdfY >= margin && pdfY <= pdfHeight + margin) {
+          try {
+            pdf.link(pdfX, pdfY, pdfLinkWidth, pdfLinkHeight, { url: link.href });
+          } catch (error) {
+            console.warn('Failed to add link annotation:', error);
+          }
         }
       });
 
       // Handle multi-page PDFs if content is too long
       if (pdfHeight > pageHeight - 2 * margin) {
-        let remainingHeight = pdfHeight;
-        position = 0;
+        pdf.deletePage(1); // Remove the first page we added
         
-        while (remainingHeight > 0) {
-          const currentPageHeight = Math.min(remainingHeight, pageHeight - 2 * margin);
-          
-          if (position > 0) {
+        let yOffset = 0;
+        const maxPageHeight = pageHeight - 2 * margin;
+        
+        while (yOffset < pdfHeight) {
+          if (yOffset > 0) {
             pdf.addPage();
           }
           
+          // Add image section for this page
           pdf.addImage(
             imgData, 
             'PNG', 
             margin, 
-            margin - position, 
+            margin - yOffset, 
             pdfWidth, 
             pdfHeight
           );
           
-          position += currentPageHeight;
-          remainingHeight -= currentPageHeight;
+          // Add links for this page section
+          links.forEach((link) => {
+            const rect = link.getBoundingClientRect();
+            const relativeX = rect.left - elementRect.left;
+            const relativeY = rect.top - elementRect.top;
+            
+            const pdfX = (relativeX / elementRect.width) * pdfWidth + margin;
+            const pdfY = (relativeY / elementRect.height) * pdfHeight + margin - yOffset;
+            const pdfLinkWidth = (rect.width / elementRect.width) * pdfWidth;
+            const pdfLinkHeight = (rect.height / elementRect.height) * pdfHeight;
+            
+            // Only add links that are visible on this page
+            if (pdfY >= margin && pdfY <= maxPageHeight + margin) {
+              try {
+                pdf.link(pdfX, pdfY, pdfLinkWidth, pdfLinkHeight, { url: link.href });
+              } catch (error) {
+                console.warn('Failed to add link annotation:', error);
+              }
+            }
+          });
+          
+          yOffset += maxPageHeight;
         }
       }
 
@@ -349,37 +380,39 @@ function SharePreviewContent() {
 
   return (
     <div className="bg-gray-100 min-h-screen">
-      {/* Download Button */}
-      <div className="p-6 bg-gray-100">
-        <button
-          onClick={generatePDF}
-          disabled={isGeneratingPDF}
-          className="mb-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
-        >
-          {isGeneratingPDF ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              📄 Download PDF
-            </>
-          )}
-        </button>
-      </div>
-
       {/* Content to be converted to PDF */}
       <div id="itinerary-content" className="itinerary-container p-6 bg-gray-100">
-        {/* Header */}
-        <h1 className="header-title text-3xl font-bold mb-2 text-black">{trip.trip_name}</h1>
-        <p className="header-info text-gray-800 mb-4">
-          Client: <span className="font-medium text-black">{clientName}</span> | Agency:{" "}
-          <span className="font-medium text-black">{agencyName}</span>
-        </p>
-        <p className="header-duration text-gray-700 mb-6">
-          Duration: {trip.start_date} → {trip.end_date}
-        </p>
+        {/* Header with inline Download Button */}
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="header-title text-3xl font-bold mb-2 text-black">{trip.trip_name}</h1>
+            <p className="header-info text-gray-800 mb-4">
+              Client: <span className="font-medium text-black">{clientName}</span> | Agency:{" "}
+              <span className="font-medium text-black">{agencyName}</span>
+            </p>
+            <p className="header-duration text-gray-700">
+              Duration: {trip.start_date} → {trip.end_date}
+            </p>
+          </div>
+          
+          {/* Download Button - positioned on the right */}
+          <button
+            onClick={generatePDF}
+            disabled={isGeneratingPDF}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2 flex-shrink-0"
+          >
+            {isGeneratingPDF ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                📄 Download PDF
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Day blocks */}
         {days.map((day, idx) => (
