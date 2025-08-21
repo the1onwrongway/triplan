@@ -14,6 +14,7 @@ function SharePreviewContent() {
   const [days, setDays] = useState([]);
   const [activities, setActivities] = useState({});
   const [vendors, setVendors] = useState([]);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     if (!tripId) return;
@@ -83,103 +84,387 @@ function SharePreviewContent() {
     fetchData();
   }, [tripId]);
 
+  const generatePDF = async () => {
+    setIsGeneratingPDF(true);
+    
+    try {
+      // Dynamic imports to avoid SSR issues
+      const jsPDF = (await import('jspdf')).default;
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const element = document.getElementById('itinerary-content');
+      if (!element) {
+        console.error('Content element not found');
+        return;
+      }
+
+      // Create canvas with higher resolution for better quality
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#f3f4f6', // Grey background
+        logging: false,
+        onclone: (clonedDoc) => {
+          // Remove all existing stylesheets that might contain lab() colors
+          const stylesheets = clonedDoc.querySelectorAll('link[rel="stylesheet"], style');
+          stylesheets.forEach(sheet => sheet.remove());
+          
+          // Add only safe inline styles
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              background-color: #f3f4f6;
+              color: #000000;
+            }
+            .itinerary-container {
+              padding: 24px;
+              background-color: #f3f4f6;
+              min-height: 100vh;
+            }
+            .header-title {
+              font-size: 30px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #000000;
+            }
+            .header-info {
+              color: #1f2937;
+              margin-bottom: 16px;
+            }
+            .header-duration {
+              color: #374151;
+              margin-bottom: 24px;
+            }
+            .day-block {
+              margin-bottom: 24px;
+              border: 1px solid #d1d5db;
+              border-radius: 8px;
+              padding: 16px;
+              background-color: #e5e7eb;
+            }
+            .day-title {
+              font-weight: 600;
+              margin-bottom: 12px;
+              color: #000000;
+            }
+            .activity-card {
+              background-color: #d1d5db;
+              padding: 12px;
+              border-radius: 8px;
+              border: 1px solid #9ca3af;
+              margin-bottom: 12px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            .activity-title {
+              font-weight: 600;
+              color: #000000;
+              margin-bottom: 4px;
+            }
+            .activity-info {
+              font-size: 14px;
+              color: #1f2937;
+              margin-bottom: 4px;
+            }
+            .activity-links {
+              font-size: 14px;
+              margin-top: 4px;
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 8px;
+            }
+            .activity-contact {
+              font-size: 14px;
+              color: #374151;
+              margin-top: 4px;
+            }
+            .map-link {
+              color: #15803d;
+              text-decoration: underline;
+            }
+            .pdf-link {
+              color: #1d4ed8;
+              text-decoration: underline;
+              margin-right: 8px;
+            }
+            .separator {
+              color: #000000;
+            }
+            .no-activities {
+              font-style: italic;
+              color: #4b5563;
+            }
+            .font-medium {
+              font-weight: 500;
+            }
+            .font-semibold {
+              font-weight: 600;
+            }
+            .font-bold {
+              font-weight: bold;
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+          
+          // Apply classes directly as inline styles to ensure they work
+          const applyInlineStyles = (element) => {
+            if (element.classList) {
+              if (element.classList.contains('itinerary-container')) {
+                element.style.cssText = 'padding: 24px; background-color: #f3f4f6; min-height: 100vh;';
+              }
+              if (element.classList.contains('header-title')) {
+                element.style.cssText = 'font-size: 30px; font-weight: bold; margin-bottom: 8px; color: #000000;';
+              }
+              if (element.classList.contains('header-info')) {
+                element.style.cssText = 'color: #1f2937; margin-bottom: 16px;';
+              }
+              if (element.classList.contains('header-duration')) {
+                element.style.cssText = 'color: #374151; margin-bottom: 24px;';
+              }
+              if (element.classList.contains('day-block')) {
+                element.style.cssText = 'margin-bottom: 24px; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; background-color: #e5e7eb;';
+              }
+              if (element.classList.contains('day-title')) {
+                element.style.cssText = 'font-weight: 600; margin-bottom: 12px; color: #000000;';
+              }
+              if (element.classList.contains('activity-card')) {
+                element.style.cssText = 'background-color: #d1d5db; padding: 12px; border-radius: 8px; border: 1px solid #9ca3af; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);';
+              }
+              if (element.classList.contains('activity-title')) {
+                element.style.cssText = 'font-weight: 600; color: #000000; margin-bottom: 4px;';
+              }
+              if (element.classList.contains('activity-info')) {
+                element.style.cssText = 'font-size: 14px; color: #1f2937; margin-bottom: 4px;';
+              }
+              if (element.classList.contains('activity-links')) {
+                element.style.cssText = 'font-size: 14px; margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;';
+              }
+              if (element.classList.contains('activity-contact')) {
+                element.style.cssText = 'font-size: 14px; color: #374151; margin-top: 4px;';
+              }
+              if (element.classList.contains('map-link')) {
+                element.style.cssText = 'color: #15803d; text-decoration: underline;';
+              }
+              if (element.classList.contains('pdf-link')) {
+                element.style.cssText = 'color: #1d4ed8; text-decoration: underline; margin-right: 8px;';
+              }
+              if (element.classList.contains('no-activities')) {
+                element.style.cssText = 'font-style: italic; color: #4b5563;';
+              }
+            }
+            
+            // Recursively apply to children
+            for (let child of element.children) {
+              applyInlineStyles(child);
+            }
+          };
+          
+          applyInlineStyles(clonedDoc.body);
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate PDF dimensions
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(190 / imgWidth, 280 / imgHeight); // A4 page margins
+      const pdfWidth = imgWidth * ratio;
+      const pdfHeight = imgHeight * ratio;
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageHeight = pdf.internal.pageSize.height;
+      
+      let position = 0;
+      const margin = 10;
+
+      // Add the image to PDF
+      pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight);
+
+      // Add clickable links for maps and PDFs
+      const links = element.querySelectorAll('a[href]');
+      links.forEach((link) => {
+        const rect = link.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        
+        const x = ((rect.left - elementRect.left) * ratio) + margin;
+        const y = ((rect.top - elementRect.top) * ratio) + margin;
+        const width = (rect.width * ratio);
+        const height = (rect.height * ratio);
+        
+        // Add link annotation
+        if (rect.top < elementRect.bottom && rect.bottom > elementRect.top) {
+          pdf.link(x, y, width, height, { url: link.href });
+        }
+      });
+
+      // Handle multi-page PDFs if content is too long
+      if (pdfHeight > pageHeight - 2 * margin) {
+        let remainingHeight = pdfHeight;
+        position = 0;
+        
+        while (remainingHeight > 0) {
+          const currentPageHeight = Math.min(remainingHeight, pageHeight - 2 * margin);
+          
+          if (position > 0) {
+            pdf.addPage();
+          }
+          
+          pdf.addImage(
+            imgData, 
+            'PNG', 
+            margin, 
+            margin - position, 
+            pdfWidth, 
+            pdfHeight
+          );
+          
+          position += currentPageHeight;
+          remainingHeight -= currentPageHeight;
+        }
+      }
+
+      // Save the PDF
+      const fileName = `${trip.trip_name || 'itinerary'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   if (!trip) {
-    return <div className="p-6">Loading itinerary...</div>;
+    return <div className="p-6 bg-gray-100 min-h-screen">Loading itinerary...</div>;
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <h1 className="text-3xl font-bold mb-2">{trip.trip_name}</h1>
-      <p className="text-gray-700 mb-4">
-        Client: <span className="font-medium">{clientName}</span> | Agency:{" "}
-        <span className="font-medium">{agencyName}</span>
-      </p>
-      <p className="text-gray-600 mb-6">
-        Duration: {trip.start_date} → {trip.end_date}
-      </p>
+    <div className="bg-gray-100 min-h-screen">
+      {/* Download Button */}
+      <div className="p-6 bg-gray-100">
+        <button
+          onClick={generatePDF}
+          disabled={isGeneratingPDF}
+          className="mb-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+        >
+          {isGeneratingPDF ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Generating PDF...
+            </>
+          ) : (
+            <>
+              📄 Download PDF
+            </>
+          )}
+        </button>
+      </div>
 
-      {/* Day blocks */}
-      {days.map((day, idx) => (
-        <div key={day} className="mb-6 border rounded p-4 bg-gray-50">
-          <h2 className="font-semibold mb-3">
-            Day {idx + 1} – {day}
-          </h2>
+      {/* Content to be converted to PDF */}
+      <div id="itinerary-content" className="itinerary-container p-6 bg-gray-100">
+        {/* Header */}
+        <h1 className="header-title text-3xl font-bold mb-2 text-black">{trip.trip_name}</h1>
+        <p className="header-info text-gray-800 mb-4">
+          Client: <span className="font-medium text-black">{clientName}</span> | Agency:{" "}
+          <span className="font-medium text-black">{agencyName}</span>
+        </p>
+        <p className="header-duration text-gray-700 mb-6">
+          Duration: {trip.start_date} → {trip.end_date}
+        </p>
 
-          <div className="space-y-3">
-            {activities[day]?.length > 0 ? (
-              activities[day].map((act) => {
-                const vendor = vendors.find(
-                  (v) => String(v.id) === String(act.vendor_id)
-                );
-                const vendorName = vendor ? vendor.name : "";
-                const vendorType = vendor ? vendor.type : "";
+        {/* Day blocks */}
+        {days.map((day, idx) => (
+          <div key={day} className="day-block mb-6 border border-gray-300 rounded p-4 bg-gray-200">
+            <h2 className="day-title font-semibold mb-3 text-black">
+              Day {idx + 1} – {day}
+            </h2>
 
-                return (
-                  <div
-                    key={act.id}
-                    className="bg-white p-3 rounded border shadow-sm"
-                  >
-                    <p className="font-semibold">{act.title}</p>
-                   <p className="text-sm text-gray-700">
-                    {vendorName} | {vendorType} | {act.time}
-                  </p>
+            <div className="space-y-3">
+              {activities[day]?.length > 0 ? (
+                activities[day].map((act) => {
+                  const vendor = vendors.find(
+                    (v) => String(v.id) === String(act.vendor_id)
+                  );
+                  const vendorName = vendor ? vendor.name : "";
+                  const vendorType = vendor ? vendor.type : "";
 
-                  <div className="text-sm mt-1 flex flex-wrap items-center gap-2">
-                    {/* Google Maps Link */}
-                    {act.maps_link && (
-                      <a
-                        href={act.maps_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-600 underline"
-                      >
-                        📍 View on Map
-                      </a>
-                    )}
+                  return (
+                    <div
+                      key={act.id}
+                      className="activity-card bg-gray-300 p-3 rounded border border-gray-400 shadow-sm"
+                    >
+                      <p className="activity-title font-semibold text-black">{act.title}</p>
+                      <p className="activity-info text-sm text-gray-800">
+                        {vendorName} | {vendorType} | {act.time}
+                      </p>
 
-                    {/* Separator if both exist */}
-                    {act.maps_link && act.pdf_urls && act.pdf_urls.length > 0 && <span>|</span>}
-
-                    {/* Show PDFs as links */}
-                    {act.pdf_urls && act.pdf_urls.length > 0 && (
-                      <span className="text-blue-600">
-                        {act.pdf_urls.map((url, idx) => (
+                      <div className="activity-links text-sm mt-1 flex flex-wrap items-center gap-2">
+                        {/* Google Maps Link */}
+                        {act.maps_link && (
                           <a
-                            key={idx}
-                            href={url}
+                            href={act.maps_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="underline mr-2"
+                            className="map-link text-green-700 underline hover:text-green-800"
                           >
-                            PDF {idx + 1}
+                            📍 View on Map
                           </a>
-                        ))}
-                      </span>
-                    )}
-                  </div>
+                        )}
 
-                    <p className="text-sm text-gray-600 mt-1">
-                      Contact: {act.contact_name} | {act.contact_phone}
-                    </p>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="italic text-gray-500">
-                No activities planned for this day.
-              </p>
-            )}
+                        {/* Separator if both exist */}
+                        {act.maps_link && act.pdf_urls && act.pdf_urls.length > 0 && (
+                          <span className="separator text-black">|</span>
+                        )}
+
+                        {/* Show PDFs as links */}
+                        {act.pdf_urls && act.pdf_urls.length > 0 && (
+                          <span className="text-blue-700">
+                            {act.pdf_urls.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="pdf-link underline mr-2 hover:text-blue-800"
+                              >
+                                PDF {idx + 1}
+                              </a>
+                            ))}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="activity-contact text-sm text-gray-700 mt-1">
+                        Contact: {act.contact_name} | {act.contact_phone}
+                      </p>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="no-activities italic text-gray-600">
+                  No activities planned for this day.
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 
 export default function SharePreviewPage() {
   return (
-    <Suspense fallback={<div className="p-6">Loading preview...</div>}>
+    <Suspense fallback={<div className="p-6 bg-gray-100 min-h-screen">Loading preview...</div>}>
       <SharePreviewContent />
     </Suspense>
   );
