@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 export default function ItineraryPage() {
   const [trips, setTrips] = useState([]);
@@ -235,195 +233,6 @@ export default function ItineraryPage() {
     }
   };
 
-  const generateItineraryPDF = (agencyName, clientName, trip, days, activities) => {
-    const doc = new jsPDF();
-    
-    // Define colors
-    const primaryColor = [41, 128, 185]; // Blue
-    const secondaryColor = [52, 152, 219]; // Lighter blue
-    const accentColor = [155, 89, 182]; // Purple
-    const textColor = [44, 62, 80]; // Dark gray
-
-    // Function to add header to each page
-    const addHeader = () => {
-      // Header Section
-      doc.setFillColor(...primaryColor);
-      doc.rect(0, 0, 210, 45, 'F'); // Header background
-      
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.setFont(undefined, 'bold');
-      doc.text(`${trip.trip_name}`, 14, 22);
-      
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'normal');
-      doc.text(`by ${agencyName}`, 14, 32);
-      
-      // Powered by Triplan
-      doc.setFontSize(10);
-      doc.setTextColor(200, 200, 200);
-      doc.text('Powered by Triplan', 150, 40);
-
-      // Client Info Section
-      doc.setFillColor(...secondaryColor);
-      doc.rect(0, 45, 210, 25, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Client: ${clientName}`, 14, 58);
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'normal');
-      doc.text(`Duration: ${trip.start_date} to ${trip.end_date}`, 14, 65);
-    };
-
-    // Function to format time to 12-hour format
-    const formatTime = (time24) => {
-      if (!time24) return '';
-      const [hours, minutes] = time24.split(':');
-      const hour12 = ((parseInt(hours) + 11) % 12) + 1;
-      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
-      return `${hour12}:${minutes} ${ampm}`;
-    };
-
-    // Add header to first page
-    addHeader();
-
-    let y = 85;
-
-    // Itinerary Content
-    doc.setTextColor(...textColor);
-    
-    days.forEach((day, dayIndex) => {
-      // Check if we need a new page
-      if (y > 220) {
-        doc.addPage();
-        addHeader(); // Add header to new page
-        y = 85;
-      }
-
-      // Day Header
-      doc.setFillColor(...accentColor);
-      doc.rect(14, y - 8, 182, 20, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
-      const dayDate = new Date(day);
-      const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
-      const formattedDate = dayDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      doc.text(`Day ${dayIndex + 1} - ${dayName}, ${formattedDate}`, 18, y + 4);
-      
-      y += 25;
-
-      const dayActivities = activities[day] || [];
-      
-      if (dayActivities.length > 0) {
-        // Create table data with vendor names and formatted times
-        const tableData = dayActivities.map((act) => {
-          const vendor = vendors.find(v => String(v.id) === String(act.vendor_id));
-          const vendorName = vendor ? vendor.name : '-';
-          const formattedTime = formatTime(act.time);
-          
-          return [
-            formattedTime,
-            act.title, // Just the title, we'll add [PDF] link in didDrawCell
-            act.type,
-            vendorName,
-            act.contact_name || '-',
-            act.contact_phone || '-'
-          ];
-        });
-
-        // Generate table
-        autoTable(doc, {
-          startY: y,
-          head: [['Time', 'Activity', 'Type', 'Vendor', 'Contact', 'Phone']],
-          body: tableData,
-          styles: { 
-            fontSize: 9,
-            cellPadding: 4,
-            textColor: textColor
-          },
-          headStyles: { 
-            fillColor: primaryColor,
-            textColor: [255, 255, 255],
-            fontStyle: 'bold',
-            fontSize: 10
-          },
-          alternateRowStyles: {
-            fillColor: [248, 249, 250]
-          },
-          columnStyles: {
-            0: { cellWidth: 25 }, // Time
-            1: { cellWidth: 45 }, // Activity
-            2: { cellWidth: 25 }, // Type
-            3: { cellWidth: 35 }, // Vendor
-            4: { cellWidth: 30 }, // Contact
-            5: { cellWidth: 30 }  // Phone
-          },
-          margin: { left: 14, right: 14 },
-          didDrawCell: function(data) {
-            // Add clickable [PDF] link after activity title if PDFs exist
-            if (data.section === 'body' && data.column.index === 1) {
-              const activityIndex = data.row.index;
-              const activity = dayActivities[activityIndex];
-              if (activity && activity.pdf_urls && activity.pdf_urls.length > 0) {
-                // First draw the activity title normally
-                const titleWidth = doc.getTextWidth(activity.title);
-                const linkY = data.cell.y + data.cell.height / 2 + 2;
-                
-                // Add the [PDF] link after the title
-                doc.setTextColor(52, 152, 219); // Blue for the link
-                doc.textWithLink(' [PDF]', data.cell.x + 2 + titleWidth + 2, linkY, { 
-                  url: activity.pdf_urls[0] 
-                });
-                
-                // Reset text color back to normal
-                doc.setTextColor(...textColor);
-              }
-            }
-          }
-        });
-
-        y = doc.lastAutoTable.finalY + 10;
-
-      } else {
-        doc.setTextColor(149, 165, 166);
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'italic');
-        doc.text('No activities planned for this day', 18, y);
-        y += 20;
-      }
-
-      // Check if we need a new page after activities
-      if (y > 220) {
-        doc.addPage();
-        addHeader(); // Add header to new page
-        y = 85;
-      }
-    });
-
-    // Footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(149, 165, 166);
-      doc.text(`Generated by ${agencyName} | Page ${i} of ${pageCount}`, 14, 285);
-      doc.text(`Powered by Triplan`, 170, 285);
-    }
-
-    // Save the PDF
-    const fileName = `${trip.trip_name.replace(/[^a-z0-9]/gi, '_')}_Itinerary.pdf`;
-    doc.save(fileName);
-  };
-
   const filteredVendors = vendors.filter((v) => v.type === activityForm.type);
 
   return (
@@ -450,24 +259,9 @@ export default function ItineraryPage() {
         </select>
       </div>
 
-      {/* PDF Download Button */}
+      {/* Preview Button */}
       {selectedTrip && (
-        <div className="mb-6 flex flex-wrap gap-3">
-          <button
-            onClick={() =>
-              generateItineraryPDF(
-                agencyName,
-                clientName,
-                selectedTrip,
-                days,
-                activities
-              )
-            }
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
-          >
-            📄 Download PDF
-          </button>
-
+        <div className="mb-6">
           <button
             onClick={() =>
               window.open(`/share_preview?tripId=${selectedTrip?.id}`, '_blank')
@@ -475,25 +269,6 @@ export default function ItineraryPage() {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
           >
             🔗 Preview
-          </button>
-
-          <button
-            onClick={async (e) => {
-              try {
-                await navigator.clipboard.writeText(`${window.location.origin}/share_preview?tripId=${selectedTrip?.id}`);
-                e.target.textContent = '✅ Link Copied';
-                e.target.className = "flex items-center gap-2 bg-green-600 text-white font-medium px-5 py-2.5 rounded-xl shadow";
-                setTimeout(() => {
-                  e.target.textContent = '📋 Copy Link';
-                  e.target.className = "flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition";
-                }, 2000);
-              } catch (err) {
-                console.error('Failed to copy: ', err);
-              }
-            }}
-            className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
-          >
-            📋 Copy Link
           </button>
         </div>
       )}
