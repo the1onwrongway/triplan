@@ -32,11 +32,19 @@ export default function HomePage() {
       </div>
 
       {/* CTA */}
+      {/*
       <Link
         href="/login"
         className="rounded-full bg-green-600 px-8 py-4 text-white text-lg font-semibold shadow-md hover:bg-green-700 transition"
       >
         Join the Pilot
+      </Link>
+      */}
+      <Link
+        href="/waitlist"
+        className="rounded-full bg-blue-600 px-8 py-4 text-white text-lg font-semibold shadow-md hover:bg-green-700 transition"
+      >
+        Join the Waitlist
       </Link>
 
       <p className="mt-12 text-gray-500 text-center max-w-xl">
