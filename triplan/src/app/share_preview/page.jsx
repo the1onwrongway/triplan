@@ -16,6 +16,23 @@ function SharePreviewContent() {
   const [vendors, setVendors] = useState([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     if (!tripId) return;
 
@@ -84,6 +101,7 @@ function SharePreviewContent() {
     fetchData();
   }, [tripId]);
 
+  
   const generatePDF = async () => {
     setIsGeneratingPDF(true);
     
@@ -396,22 +414,22 @@ function SharePreviewContent() {
           </div>
           
           {/* Download Button - positioned on the right */}
-          <button
-            onClick={generatePDF}
-            disabled={isGeneratingPDF}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2 flex-shrink-0"
-          >
-            {isGeneratingPDF ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Generating PDF...
-              </>
-            ) : (
-              <>
-                📄 PDF(Desktop)
-              </>
-            )}
-          </button>
+          {user && (
+            <button
+              onClick={generatePDF}
+              disabled={isGeneratingPDF}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2 flex-shrink-0"
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Generating PDF...
+                </>
+              ) : (
+                <>📄 PDF(Desktop)</>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Day blocks */}
