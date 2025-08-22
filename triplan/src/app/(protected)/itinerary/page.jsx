@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Download } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 export default function ItineraryPage() {
@@ -18,6 +18,7 @@ export default function ItineraryPage() {
   const [agencyId, setAgencyId] = useState(null);
   const [agencyName, setAgencyName] = useState("");
   const [clientName, setClientName] = useState("");
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Fetch agency profile, trips, and vendors
   useEffect(() => {
@@ -78,8 +79,8 @@ export default function ItineraryPage() {
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       tempDays.push(d.toISOString().slice(0, 10));
     }
-            setDays(tempDays);
-        setClientName(selectedTrip.clients?.name || "Client");
+    setDays(tempDays);
+    setClientName(selectedTrip.clients?.name || "Client");
 
     const fetchActivities = async () => {
       const { data: acts, error } = await supabase
@@ -133,29 +134,29 @@ export default function ItineraryPage() {
 
   // Upload PDFs to Supabase storage and get public URLs
   const uploadPDFs = async (files, activityId) => {
-  if (!files || files.length === 0) return [];
+    if (!files || files.length === 0) return [];
 
-  const urls = [];
-  for (let file of files) {
-    const fileName = `${activityId}/${Date.now()}_${file.name}`;
-    const { data, error } = await supabase.storage
-      .from("itinerary-pdfs")
-      .upload(fileName, file);
-
-    if (error) {
-      console.error("PDF Upload Error:", error);
-    } else {
-      // Get a signed URL valid for 7 days (you can change duration)
-      const { data: signed } = await supabase.storage
+    const urls = [];
+    for (let file of files) {
+      const fileName = `${activityId}/${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
         .from("itinerary-pdfs")
-        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
-      if (signed?.signedUrl) {
-        urls.push(signed.signedUrl);
+        .upload(fileName, file);
+
+      if (error) {
+        console.error("PDF Upload Error:", error);
+      } else {
+        // Get a signed URL valid for 7 days (you can change duration)
+        const { data: signed } = await supabase.storage
+          .from("itinerary-pdfs")
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
+        if (signed?.signedUrl) {
+          urls.push(signed.signedUrl);
+        }
       }
     }
-  }
-  return urls;
-};
+    return urls;
+  };
 
   const handleSaveActivity = async (day) => {
     const requiredFields = ["title", "type", "time", "vendor_id"];
@@ -233,6 +234,185 @@ export default function ItineraryPage() {
     }
   };
 
+  // PDF Generation Function
+  const generatePDF = async () => {
+    if (!selectedTrip) {
+      alert("Please select a trip first");
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+
+    try {
+      // Create a new window with the itinerary content
+      const printWindow = window.open('', '_blank');
+      
+      // Generate HTML content for PDF
+      const pdfContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${selectedTrip.trip_name} - Itinerary</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              background: white;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              color: #333;
+              font-size: 28px;
+              margin-bottom: 10px;
+            }
+            .header-info {
+              font-size: 16px;
+              color: #666;
+              margin: 5px 0;
+            }
+            .day-block {
+              margin-bottom: 25px;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              padding: 20px;
+              background: #f9f9f9;
+            }
+            .day-title {
+              font-size: 20px;
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 15px;
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 8px;
+            }
+            .activity-card {
+              background: white;
+              border: 1px solid #ddd;
+              border-radius: 6px;
+              padding: 15px;
+              margin-bottom: 12px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .activity-title {
+              font-size: 16px;
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 8px;
+            }
+            .activity-info {
+              font-size: 14px;
+              color: #666;
+              margin-bottom: 6px;
+            }
+            .activity-contact {
+              font-size: 13px;
+              color: #777;
+              margin-top: 8px;
+            }
+            .activity-links {
+              font-size: 13px;
+              margin-top: 6px;
+            }
+            .map-link {
+              color: #2563eb;
+              text-decoration: none;
+            }
+            .pdf-link {
+              color: #dc2626;
+              text-decoration: none;
+              margin-right: 8px;
+            }
+            .no-activities {
+              font-style: italic;
+              color: #999;
+              text-align: center;
+              padding: 20px;
+            }
+            @media print {
+              body { margin: 0; padding: 15px; }
+              .day-block { break-inside: avoid; }
+              .activity-card { break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${selectedTrip.trip_name}</h1>
+            <div class="header-info">
+              <strong>Client:</strong> ${clientName} | <strong>Agency:</strong> ${agencyName}
+            </div>
+            <div class="header-info">
+              <strong>Duration:</strong> ${selectedTrip.start_date} → ${selectedTrip.end_date}
+            </div>
+          </div>
+
+          ${days.map((day, idx) => {
+            const dayActivities = activities[day] || [];
+            return `
+              <div class="day-block">
+                <div class="day-title">Day ${idx + 1} – ${day}</div>
+                ${dayActivities.length > 0 ? 
+                  dayActivities.map(act => {
+                    const vendor = vendors.find(v => String(v.id) === String(act.vendor_id));
+                    const vendorName = vendor ? vendor.name : "";
+                    const vendorType = vendor ? vendor.type : "";
+                    
+                    return `
+                      <div class="activity-card">
+                        <div class="activity-title">${act.title}</div>
+                        <div class="activity-info">${vendorName} | ${vendorType} | ${act.time}</div>
+                        ${(act.maps_link || (act.pdf_urls && act.pdf_urls.length > 0)) ? `
+                          <div class="activity-links">
+                            ${act.maps_link ? `<a href="${act.maps_link}" class="map-link">📍 View on Map</a>` : ''}
+                            ${act.maps_link && act.pdf_urls && act.pdf_urls.length > 0 ? ' | ' : ''}
+                            ${act.pdf_urls && act.pdf_urls.length > 0 ? 
+                              act.pdf_urls.map((url, idx) => `<a href="${url}" class="pdf-link">PDF ${idx + 1}</a>`).join(' ')
+                              : ''
+                            }
+                          </div>
+                        ` : ''}
+                        <div class="activity-contact">Contact: ${act.contact_name || 'N/A'} | ${act.contact_phone || 'N/A'}</div>
+                      </div>
+                    `;
+                  }).join('')
+                  : '<div class="no-activities">No activities planned for this day.</div>'
+                }
+              </div>
+            `;
+          }).join('')}
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(pdfContent);
+      printWindow.document.close();
+
+      // Wait for content to load then trigger print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+          setIsGeneratingPDF(false);
+        }, 500);
+      };
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
+      setIsGeneratingPDF(false);
+    }
+  };
+
   const filteredVendors = vendors.filter((v) => v.type === activityForm.type);
 
   return (
@@ -259,9 +439,9 @@ export default function ItineraryPage() {
         </select>
       </div>
 
-      {/* Preview Button */}
+      {/* Action Buttons */}
       {selectedTrip && (
-        <div className="mb-6">
+        <div className="mb-6 flex gap-3">
           <button
             onClick={() =>
               window.open(`/share_preview?tripId=${selectedTrip?.id}`, '_blank')
@@ -270,9 +450,17 @@ export default function ItineraryPage() {
           >
             🔗 Preview
           </button>
+          
+          <button
+            onClick={generatePDF}
+            disabled={isGeneratingPDF}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium px-5 py-2.5 rounded-xl shadow transition"
+          >
+            <Download size={18} />
+            {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+          </button>
         </div>
       )}
-
 
       {/* Day Blocks */}
       {days.map((day) => (
@@ -415,7 +603,7 @@ export default function ItineraryPage() {
                     className="border p-2 w-full"
                   />
 
-                  {/* NEW: Show newly selected files (as before) */}
+                  {/* Show newly selected files */}
                   {activityForm.pdfs && activityForm.pdfs.length > 0 && (
                     <ul className="mt-2 text-sm text-gray-600">
                       {activityForm.pdfs.map((file, idx) => (
@@ -424,7 +612,7 @@ export default function ItineraryPage() {
                     </ul>
                   )}
 
-                  {/* NEW: Show existing PDFs when editing */}
+                  {/* Show existing PDFs when editing */}
                   {activityForm.existing_pdfs &&
                   activityForm.existing_pdfs.length > 0 && (
                     <div className="mt-3">
