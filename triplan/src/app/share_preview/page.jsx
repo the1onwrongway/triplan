@@ -408,7 +408,7 @@ function SharePreviewContent() {
               </>
             ) : (
               <>
-                📄 Download PDF
+                📄 PDF(Desktop)
               </>
             )}
           </button>
