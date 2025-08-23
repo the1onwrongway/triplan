@@ -23,12 +23,12 @@ export default function HomePage() {
           {/* CTA Buttons */}
           <div className="flex justify-center lg:justify-end gap-4">
             <a
-              href="https://your-preview-link.com"
+              href="https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition"
             >
-              Check Demo
+              Check Itinerary
             </a>
             
             <Link
@@ -76,7 +76,6 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="text-sm text-gray-500 hover:text-gray-700 transition"
               >
-                Triplan by Milan Macwan
               </a>
             </div>
           </div>
@@ -120,7 +119,6 @@ export default function HomePage() {
                   rel="noopener noreferrer"
                   className="text-sm text-gray-500 hover:text-gray-700 transition"
                 >
-                  Triplan by Milan Macwan
                 </a>
               </div>
             </div>
@@ -205,7 +203,7 @@ export default function HomePage() {
 
         {/* Description */}
         <p className="text-gray-600 text-center max-w-xl mx-auto">
-          Start with itinerary sharing today and help shape the next-generation travel CRM.
+          Start with itinerary sharing and shape the next-generation travel CRM.
         </p>
       </div>
     </main>
