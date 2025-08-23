@@ -194,13 +194,38 @@ export default function ClientsPage() {
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="space-y-3 max-w-lg">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
+        {/* Row 1: Name + Travel Type */}
+        <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
             placeholder="Name"
             className="w-full border p-2 rounded"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+          <select
+            className="w-full border p-2 rounded"
+            value={form.preferred_type}
+            onChange={(e) =>
+              setForm({ ...form, preferred_type: e.target.value })
+            }
+          >
+            <option value="Solo">Solo</option>
+            <option value="Family">Family</option>
+            <option value="Group">Group</option>
+            <option value="Couple">Couple</option>
+          </select>
+        </div>
+
+        {/* Row 2: Phone + Email */}
+        <div className="grid grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="Phone"
+            className="w-full border p-2 rounded"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
           <input
             type="email"
@@ -209,13 +234,10 @@ export default function ClientsPage() {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
-          <input
-            type="text"
-            placeholder="Phone"
-            className="w-full border p-2 rounded"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
+        </div>
+
+        {/* Row 3: City + State */}
+        <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
             placeholder="City"
@@ -230,6 +252,10 @@ export default function ClientsPage() {
             value={form.state}
             onChange={(e) => setForm({ ...form, state: e.target.value })}
           />
+        </div>
+
+        {/* Row 4: Pincode + Notes */}
+        <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
             placeholder="Pincode"
@@ -237,16 +263,6 @@ export default function ClientsPage() {
             value={form.pincode}
             onChange={(e) => setForm({ ...form, pincode: e.target.value })}
           />
-          <select
-            className="w-full border p-2 rounded"
-            value={form.preferred_type}
-            onChange={(e) => setForm({ ...form, preferred_type: e.target.value })}
-          >
-            <option value="Solo">Solo</option>
-            <option value="Family">Family</option>
-            <option value="Group">Group</option>
-            <option value="Couple">Couple</option>
-          </select>
           <textarea
             placeholder="Special Notes"
             className="w-full border p-2 rounded"
@@ -255,66 +271,68 @@ export default function ClientsPage() {
               setForm({ ...form, special_notes: e.target.value })
             }
           />
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              {form.id ? "Update Client" : "Add Client"}
-            </button>
-            {form.id && (
-              <button
-                type="button"
-                /*onClick={handleDelete}*/
-                onClick={() => setShowDeleteConfirm(true)}  // 👈 open popup instead
+        </div>
 
-                className="bg-red-500 text-white px-4 py-2 rounded"
-              >
-                Delete
-              </button>
-            )}
+        {/* Buttons */}
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="bg-green-500 text-white px-4 py-2 rounded"
+          >
+            {form.id ? "Update Client" : "Add Client"}
+          </button>
+          {form.id && (
             <button
               type="button"
-              onClick={() => {
-                setShowForm(false);
-                resetForm();
-              }}
-              className="bg-gray-500 text-white px-4 py-2 rounded"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="bg-red-500 text-white px-4 py-2 rounded"
             >
-              Cancel
+              Delete
             </button>
-            {showDeleteConfirm && (
-              <div className="fixed inset-0 flex items-center justify-center z-50 
-                              bg-gradient-to-br from-black/40 via-gray-800/30 to-black/40">
-                <div className="bg-white p-6 rounded-2xl shadow-lg w-96">
-                  <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
-                  <p className="mb-6">
-                    Are you sure to delete client{" "}
-                    <span className="font-semibold">"{form?.name}"</span>?
-                  </p>
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="border px-4 py-2 rounded"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await handleDelete();
-                        setShowDeleteConfirm(false);
-                      }}
-                      className="bg-red-600 text-white px-4 py-2 rounded"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm(false);
+              resetForm();
+            }}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+
+        {/* ✅ Delete Confirmation Popup */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-black/40 via-gray-800/30 to-black/40">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-96">
+              <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+              <p className="mb-6">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">"{form?.name}"</span>?
+              </p>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="border px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleDelete();
+                    setShowDeleteConfirm(false);
+                  }}
+                  className="bg-red-600 text-white px-4 py-2 rounded"
+                >
+                  Delete
+                </button>
               </div>
-            )}
+            </div>
           </div>
-        </form>
-      )}
+        )}
+      </form>
+    )}
     </div>
   );
 }
