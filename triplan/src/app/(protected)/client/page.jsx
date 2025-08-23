@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Pencil, Plus } from "lucide-react";
 
 export default function ClientsPage() {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState({
     id: null,
@@ -264,7 +265,9 @@ export default function ClientsPage() {
             {form.id && (
               <button
                 type="button"
-                onClick={handleDelete}
+                /*onClick={handleDelete}*/
+                onClick={() => setShowDeleteConfirm(true)}  // 👈 open popup instead
+
                 className="bg-red-500 text-white px-4 py-2 rounded"
               >
                 Delete
@@ -280,6 +283,35 @@ export default function ClientsPage() {
             >
               Cancel
             </button>
+            {showDeleteConfirm && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 
+                              bg-gradient-to-br from-black/40 via-gray-800/30 to-black/40">
+                <div className="bg-white p-6 rounded-2xl shadow-lg w-96">
+                  <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+                  <p className="mb-6">
+                    Are you sure to delete client{" "}
+                    <span className="font-semibold">"{form?.name}"</span>?
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="border px-4 py-2 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await handleDelete();
+                        setShowDeleteConfirm(false);
+                      }}
+                      className="bg-red-600 text-white px-4 py-2 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </form>
       )}

@@ -10,6 +10,7 @@ export default function VendorsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingVendor, setEditingVendor] = useState(null); // track vendor being edited
   const [agencyId, setAgencyId] = useState(null); // store current agency id
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); 
   const [formData, setFormData] = useState({
     type: "Hotel",
     name: "",
@@ -137,7 +138,6 @@ export default function VendorsPage() {
   // Handle delete vendor
   const handleDelete = async () => {
     if (!editingVendor) return;
-    if (!confirm("Are you sure you want to delete this vendor?")) return;
 
     const { error } = await supabase
       .from("vendors")
@@ -318,7 +318,7 @@ export default function VendorsPage() {
             {editingVendor && (
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)} 
                 className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
               >
                 Delete Vendor
@@ -360,6 +360,37 @@ export default function VendorsPage() {
           ))}
         </tbody>
       </table>
+
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 
+                        bg-gradient-to-br from-black/40 via-gray-800/30 to-black/40">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-6">
+              Are you sure you want to delete vendor{" "}
+              <span className="font-semibold">"{editingVendor?.name}"</span>?
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="border px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleDelete();
+                  setShowDeleteConfirm(false);
+                }}
+                className="bg-red-600 text-white px-4 py-2 rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

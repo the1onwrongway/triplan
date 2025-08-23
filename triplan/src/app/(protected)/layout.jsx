@@ -72,7 +72,8 @@ export default function ProtectedLayout({ children }) {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    /*<div className="flex min-h-screen bg-gray-100">*/
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200">
       {/* Sidebar */}
       <div
         className={`bg-white shadow-lg transition-all duration-300 ${

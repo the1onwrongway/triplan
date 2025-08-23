@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Pencil, Plus } from "lucide-react";
 
+
 export default function TripsPage() {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [trips, setTrips] = useState([]);
   const [clients, setClients] = useState([]);
   const [formData, setFormData] = useState({
@@ -12,7 +14,7 @@ export default function TripsPage() {
     trip_name: "",
     start_date: "",
     end_date: "",
-    budget: "",
+    budget: "0",
   });
   const [showForm, setShowForm] = useState(false);
   const [agencyId, setAgencyId] = useState(null);
@@ -126,28 +128,57 @@ export default function TripsPage() {
     fetchTrips();
   };
 
-  // ✅ Delete trip
-  const handleDelete = async () => {
-    if (!editingTrip) return;
-    const { error } = await supabase
-      .from("trips")
-      .delete()
-      .eq("id", editingTrip.id)
-      .eq("agency_id", agencyId);
 
-    if (error) console.error("Error deleting trip:", error.message);
+  // ✅ Step 1: Defensive delete with guards + logging + verification
+const handleDelete = async () => {
+  if (!editingTrip?.id) {
+    console.error("Delete aborted: no trip selected.");
+    return;
+  }
+  if (!agencyId) {
+    console.error("Delete aborted: agencyId not loaded yet.");
+    return;
+  }
 
-    setFormData({
-      client_id: "",
-      trip_name: "",
-      start_date: "",
-      end_date: "",
-      budget: "",
-    });
-    setShowForm(false);
-    setEditingTrip(null);
-    fetchTrips();
-  };
+  console.log("Attempting delete", {
+    tripId: editingTrip.id,
+    agencyId,
+  });
+
+  // Use .select() after delete to return deleted rows (helps verify it actually deleted)
+  const { data: deleted, error } = await supabase
+    .from("trips")
+    .delete()
+    .eq("id", editingTrip.id)
+    .eq("agency_id", agencyId)
+    .select(); // returns deleted rows
+
+  if (error) {
+    console.error("Error deleting trip:", error.message);
+    return;
+  }
+
+  if (!deleted || deleted.length === 0) {
+    console.warn("No rows deleted. Check agency_id mismatch or RLS policy.");
+  } else {
+    console.log("Deleted rows:", deleted);
+  }
+
+  // Reset UI state
+  setFormData({
+    client_id: "",
+    trip_name: "",
+    start_date: "",
+    end_date: "",
+    budget: "",
+  });
+  setShowForm(false);
+  setEditingTrip(null);
+
+  // Refresh table
+  fetchTrips();
+};
+
 
   // ✅ Edit mode
   const handleEdit = (trip) => {
@@ -262,7 +293,7 @@ export default function TripsPage() {
             {editingTrip && (
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="bg-red-600 text-white px-4 py-2 rounded"
               >
                 Delete Trip
@@ -286,6 +317,34 @@ export default function TripsPage() {
             >
               Cancel
             </button>
+            {showDeleteConfirm && (
+            <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-black/40 via-gray-800/30 to-black/40">
+              <div className="bg-white p-6 rounded-2xl shadow-lg w-96">
+                <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+                <p className="mb-6">
+                  Are you sure you want to delete {" "}
+                  <span className="font-semibold">"{editingTrip?.trip_name}"</span>?
+                </p>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="border px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await handleDelete();
+                      setShowDeleteConfirm(false);
+                    }}
+                    className="bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
         </form>
       )}
