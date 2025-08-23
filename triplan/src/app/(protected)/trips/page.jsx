@@ -89,45 +89,58 @@ export default function TripsPage() {
   };
 
   // ✅ Save or Update trip
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!agencyId) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!agencyId) return;
 
-    if (editingTrip) {
-      // update
-      const { error } = await supabase
-        .from("trips")
-        .update({
-          ...formData,
-        })
-        .eq("id", editingTrip.id)
-        .eq("agency_id", agencyId);
+  // ✅ Date validation
+  const today = new Date().setHours(0, 0, 0, 0);
+  const startDate = new Date(formData.start_date).setHours(0, 0, 0, 0);
+  const endDate = new Date(formData.end_date).setHours(0, 0, 0, 0);
 
-      if (error) console.error("Error updating trip:", error.message);
-    } else {
-      // insert
-      const { error } = await supabase.from("trips").insert([
-        {
-          ...formData,
-          agency_id: agencyId,
-        },
-      ]);
+  if (startDate < today) {
+    alert("🚫 Start date cannot be in the past.");
+    return;
+  }
+  if (endDate <= startDate) {
+    alert("🚫 End date must be after the start date.");
+    return;
+  }
 
-      if (error) console.error("Error adding trip:", error.message);
-    }
+  if (editingTrip) {
+    // update
+    const { error } = await supabase
+      .from("trips")
+      .update({
+        ...formData,
+      })
+      .eq("id", editingTrip.id)
+      .eq("agency_id", agencyId);
 
-    setFormData({
-      client_id: "",
-      trip_name: "",
-      start_date: "",
-      end_date: "",
-      budget: "",
-    });
-    setShowForm(false);
-    setEditingTrip(null);
-    fetchTrips();
-  };
+    if (error) console.error("Error updating trip:", error.message);
+  } else {
+    // insert
+    const { error } = await supabase.from("trips").insert([
+      {
+        ...formData,
+        agency_id: agencyId,
+      },
+    ]);
 
+    if (error) console.error("Error adding trip:", error.message);
+  }
+
+  setFormData({
+    client_id: "",
+    trip_name: "",
+    start_date: "",
+    end_date: "",
+    budget: "",
+  });
+  setShowForm(false);
+  setEditingTrip(null);
+  fetchTrips();
+};
 
   // ✅ Step 1: Defensive delete with guards + logging + verification
 const handleDelete = async () => {
@@ -255,6 +268,7 @@ const handleDelete = async () => {
                 onChange={handleChange}
                 required
                 className="border p-2 w-full"
+                min={new Date().toISOString().split("T")[0]} // ✅ today's date
               />
             </div>
 
@@ -267,6 +281,7 @@ const handleDelete = async () => {
                 onChange={handleChange}
                 required
                 className="border p-2 w-full"
+                min={formData.start_date || new Date().toISOString().split("T")[0]} // ✅ at least start date
               />
             </div>
 
