@@ -79,7 +79,8 @@ function SharePreviewContent() {
       const { data: acts, error: actsError } = await supabase
         .from("itinerary")
         .select("*")
-        .eq("trip_id", tripId);
+        .eq("trip_id", tripId)
+        .order('time', { ascending: true }); // <-- sort by time ascending;
 
       if (actsError) {
         console.error(actsError);
