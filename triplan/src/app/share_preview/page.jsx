@@ -15,8 +15,10 @@ function SharePreviewContent() {
   const [activities, setActivities] = useState({});
   const [vendors, setVendors] = useState([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showCopySuccess, setShowCopySuccess] = useState(false); // New state for copy success
 
   const [user, setUser] = useState(null);
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -100,6 +102,26 @@ function SharePreviewContent() {
 
     fetchData();
   }, [tripId]);
+
+  // New copy URL function
+  const copyCurrentURL = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    }
+  };
 
   
   const generatePDF = async () => {
@@ -398,6 +420,13 @@ function SharePreviewContent() {
 
   return (
     <div className="bg-gray-100 min-h-screen">
+      {/* Success message for copy URL */}
+      {showCopySuccess && (
+        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50">
+          ✅ URL copied to clipboard!
+        </div>
+      )}
+
       {/* Content to be converted to PDF */}
       <div id="itinerary-content" className="itinerary-container p-6 bg-gray-100">
         {/* Header with inline Download Button */}
@@ -413,22 +442,33 @@ function SharePreviewContent() {
             </p>
           </div>
           
-          {/* Download Button - positioned on the right */}
+          {/* Buttons - positioned on the right */}
           {user && (
-            <button
-              onClick={generatePDF}
-              disabled={isGeneratingPDF}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2 flex-shrink-0"
-            >
-              {isGeneratingPDF ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Generating PDF...
-                </>
-              ) : (
-                <>📄 PDF(Desktop)</>
-              )}
-            </button>
+            <div className="flex gap-3 flex-shrink-0">
+              {/* Copy URL Button */}
+              <button
+                onClick={copyCurrentURL}
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+              >
+                {showCopySuccess ? '✅ Copied!' : '🔗 Copy URL'}
+              </button>
+
+              {/* PDF Download Button */}
+              <button
+                onClick={generatePDF}
+                disabled={isGeneratingPDF}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>📄 PDF(Desktop)</>
+                )}
+              </button>
+            </div>
           )}
         </div>
 
