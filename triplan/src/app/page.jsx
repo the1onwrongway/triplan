@@ -23,22 +23,24 @@ export default function HomePage() {
           </div>
           
           {/* CTA Buttons */}
-          <div className="flex justify-center lg:justify-end gap-4">
-            <a
-            href="https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition"
-            >
-              Check Itinerary
-            </a>            
-            <Link
-              href="/waitlist"
-              className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition"
-            >
-              Join Waitlist
-            </Link>
-          </div>
+     <div className="flex justify-center lg:justify-end gap-4">
+    <div
+        onClick={() => {
+            window.open('https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc', '_blank', 'noopener,noreferrer');
+        }}
+        className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition cursor-pointer"
+        role="button"
+        tabIndex="0"
+    >
+        Check Itinerary
+    </div>
+    <Link
+        href="/waitlist"
+        className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition"
+    >
+        Join Waitlist
+    </Link>
+</div>
         </div>
 
         {/* Mobile: Video full width */}
