@@ -27,7 +27,6 @@ export default function HomePage() {
             <a
               href="https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc"
               target="_blank"
-              rel="noopener noreferrer"
               className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition"
             >
               Check Itinerary
