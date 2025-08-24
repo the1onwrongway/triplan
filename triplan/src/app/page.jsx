@@ -7,8 +7,8 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 relative overflow-hidden">
       {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+      <div className="absolute top-0 left-0 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse pointer-events-none"></div>
 
       <div className="px-6 py-8 max-w-7xl mx-auto">
         {/* Header with CTA buttons */}
@@ -23,24 +23,22 @@ export default function HomePage() {
           </div>
           
           {/* CTA Buttons */}
-     <div className="flex justify-center lg:justify-end gap-4">
-    <div
-        onClick={() => {
-            window.open('https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc', '_blank', 'noopener,noreferrer');
-        }}
-        className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition cursor-pointer"
-        role="button"
-        tabIndex="0"
-    >
-        Check Itinerary
-    </div>
-    <Link
-        href="/waitlist"
-        className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition"
-    >
-        Join Waitlist
-    </Link>
-</div>
+          <div className="flex justify-center lg:justify-end gap-4">
+            <a
+            href="https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition"
+            >
+              Check Itinerary
+            </a>            
+            <Link
+              href="/waitlist"
+              className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition"
+            >
+              Join Waitlist
+            </Link>
+          </div>
         </div>
 
         {/* Mobile: Video full width */}
