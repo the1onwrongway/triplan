@@ -180,25 +180,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          {/* Mobile buttons */}
-          <div className="flex flex-col gap-3 mb-8">
-            <a
-              href="https://triplan-lite.vercel.app/share_preview?tripId=9dfa80b5-cd54-4621-93cf-f0c8b9e2fcbc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition text-center"
-            >
-              Check Preview
-            </a>
-            
-            <Link
-              href="/waitlist"
-              className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition text-center"
-            >
-              Join Waitlist
-            </Link>
-          </div>
         </div>
 
         {/* Description */}
