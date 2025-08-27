@@ -15,7 +15,7 @@ export default function HomePage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-16">
           <div className="text-center lg:text-left mb-6 lg:mb-0">
             <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4">
-              Triplan 🚀
+              Triplan
             </h1>
             <h2 className="text-2xl lg:text-3xl font-bold text-gray-700 leading-snug">
               Run Your Travel Agency Like a Pro
