@@ -63,16 +63,16 @@ export default function ProtectedLayout({ children }) {
   // Sidebar menu items with icons
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-    { name: "Trips", path: "/trips", icon: <Briefcase size={20} /> },
-    { name: "Itinerary", path: "/itinerary", icon: <Map size={20} /> }, // ✅ NEW PAGE
     { name: "Client", path: "/client", icon: <Users size={20} /> },
     { name: "Vendors", path: "/vendors", icon: <Store size={20} /> },
-    { name: "Reports", path: "/reports", icon: <BarChart3 size={20} /> },
-    { name: "Profile", path: "/profile", icon: <User size={20} /> },
+    { name: "Trips", path: "/trips", icon: <Briefcase size={20} /> },
+    { name: "Itinerary", path: "/itinerary", icon: <Map size={20} /> },
+    {name: "Profile", path: "/profile", icon: <User size={20} /> },
+    // ✅ CHANGED: Mark Reports as a future feature
+    {name: "Reports", path: "/reports", icon: <BarChart3 size={20} />, disabled: true,tooltip: "Coming Soon"},
   ];
 
   return (
-    /*<div className="flex min-h-screen bg-gray-100">*/
     <div className="flex min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200">
       {/* Sidebar */}
       <div
@@ -88,14 +88,17 @@ export default function ProtectedLayout({ children }) {
         </div>
         <nav className="p-2">
           {menuItems.map((item) => (
-            <Link
+            // ✅ CHANGED: Conditionally disable link if future feature
+            <button
               key={item.name}
-              href={item.path}
-              className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-200"
+              onClick={() => !item.disabled && router.push(item.path)}
+              className={`flex items-center gap-2 px-4 py-2 rounded w-full text-left 
+                ${item.disabled ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "hover:bg-gray-200"} `}
+              title={item.disabled ? item.tooltip : ""}
             >
               {item.icon}
               {sidebarOpen && <span>{item.name}</span>}
-            </Link>
+            </button>
           ))}
         </nav>
         <div className="p-4 border-t">
