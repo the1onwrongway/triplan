@@ -244,41 +244,9 @@ export default function VendorsPage() {
             />
             <input
               type="text"
-              name="phone"
-              placeholder="Phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="p-2 border rounded"
-            />
-            <input
-              type="text"
               name="address2"
               placeholder="Address 2"
               value={formData.address2}
-              onChange={handleChange}
-              className="p-2 border rounded"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className="p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="state"
-              placeholder="State"
-              value={formData.state}
-              onChange={handleChange}
-              className="p-2 border rounded"
-            />
-            <input
-              type="text"
-              name="website"
-              placeholder="Website"
-              value={formData.website}
               onChange={handleChange}
               className="p-2 border rounded"
             />
@@ -295,6 +263,38 @@ export default function VendorsPage() {
               name="pincode"
               placeholder="Pincode"
               value={formData.pincode}
+              onChange={handleChange}
+              className="p-2 border rounded"
+            />
+            <input
+              type="text"
+              name="state"
+              placeholder="State"
+              value={formData.state}
+              onChange={handleChange}
+              className="p-2 border rounded"
+            />
+            <input
+              type="text"
+              name="phone"
+              placeholder="Phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="p-2 border rounded"
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              className="p-2 border rounded"
+            />
+            <input
+              type="text"
+              name="website"
+              placeholder="Website"
+              value={formData.website}
               onChange={handleChange}
               className="p-2 border rounded"
             />
