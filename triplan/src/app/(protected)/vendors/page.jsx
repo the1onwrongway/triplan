@@ -229,18 +229,20 @@ export default function VendorsPage() {
             <input
               type="text"
               name="name"
-              placeholder="Name"
+              placeholder="Name*"
               value={formData.name}
               onChange={handleChange}
               className="p-2 border rounded"
+              required
             />
             <input
               type="text"
               name="address1"
-              placeholder="Address 1"
+              placeholder="Address 1*"
               value={formData.address1}
               onChange={handleChange}
               className="p-2 border rounded"
+              required
             />
             <input
               type="text"
@@ -253,34 +255,38 @@ export default function VendorsPage() {
             <input
               type="text"
               name="city"
-              placeholder="City"
+              placeholder="City*"
               value={formData.city}
               onChange={handleChange}
               className="p-2 border rounded"
+              required
             />
             <input
               type="text"
               name="pincode"
-              placeholder="Pincode"
+              placeholder="Pincode*"
               value={formData.pincode}
               onChange={handleChange}
               className="p-2 border rounded"
+              required
             />
             <input
               type="text"
               name="state"
-              placeholder="State"
+              placeholder="State*"
               value={formData.state}
               onChange={handleChange}
               className="p-2 border rounded"
+              required
             />
             <input
               type="text"
               name="phone"
-              placeholder="Phone"
+              placeholder="Phone*"
               value={formData.phone}
               onChange={handleChange}
               className="p-2 border rounded"
+              required
             />
             <input
               type="email"

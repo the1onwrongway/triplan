@@ -30,13 +30,19 @@ export default function HomePage() {
               rel="noopener noreferrer"
               className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition"
             >
-              Check Itinerary
+              Demo Itinerary
             </a>            
             <Link
               href="/waitlist"
-              className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition"
+              className="rounded-full bg-gray-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-gray-700 transition"
             >
               Join Waitlist
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-full bg-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-blue-700 transition"
+            >
+              Login / Singup
             </Link>
           </div>
         </div>
