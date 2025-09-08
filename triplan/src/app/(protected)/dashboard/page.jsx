@@ -169,7 +169,7 @@ export default function DashboardPage() {
           {/* Step 1 */}
           <div className="flex flex-col items-center flex-shrink-0">
             <div className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">1</div>
-            <p className="mt-2 text-black-200 text-center font-medium">Add user</p>
+            <p className="mt-2 text-black-200 text-center font-medium">Add Client</p>
           </div>
 
           {/* Arrow */}
