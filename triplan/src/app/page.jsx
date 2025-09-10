@@ -132,49 +132,32 @@ export default function HomePage() {
           </div>
 
           {/* Cards - takes 2 columns, stacked vertically */}
-          <div className="col-span-2 grid grid-cols-2 gap-6 h-full">
-            {/* Card 1 */}
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex flex-col justify-center">
-              <div className="flex items-center mb-3">
-                <FaRegCalendarAlt className="text-blue-500 text-3xl mr-4 flex-shrink-0" />
-                <h3 className="text-xl font-semibold">Create Itineraries</h3>
+          <div className="col-span-2 flex flex-col gap-6 h-full">
+            {/* Feature cards */}
+            <div className="flex flex-col gap-6 flex-1">
+              <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex-1 flex flex-col justify-center">
+                <div className="flex items-center mb-3">
+                  <FaRegCalendarAlt className="text-blue-500 text-3xl mr-4 flex-shrink-0" />
+                  <h3 className="text-xl font-semibold">Create Itineraries</h3>
+                </div>
+                <p className="text-gray-600">Build beautiful, detailed trip plans in minutes.</p>
               </div>
-              <p className="text-gray-600">Build beautiful, detailed trip plans in minutes.</p>
-            </div>
 
-            {/* Card 2 */}
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex flex-col justify-center">
-              <div className="flex items-center mb-3">
-                <FaShareAlt className="text-green-500 text-3xl mr-4 flex-shrink-0" />
-                <h3 className="text-xl font-semibold">Share with Clients</h3>
+              <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex-1 flex flex-col justify-center">
+                <div className="flex items-center mb-3">
+                  <FaShareAlt className="text-green-500 text-3xl mr-4 flex-shrink-0" />
+                  <h3 className="text-xl font-semibold">Share with Clients</h3>
+                </div>
+                <p className="text-gray-600">Give your customers premium experiences they'll love.</p>
               </div>
-              <p className="text-gray-600">Give your customers premium experiences they'll love.</p>
-            </div>
 
-            {/* Card 3 */}
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex flex-col justify-center">
-              <div className="flex items-center mb-3">
-                <FaChartLine className="text-purple-500 text-3xl mr-4 flex-shrink-0" />
-                <h3 className="text-xl font-semibold">Future CRM</h3>
+              <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex-1 flex flex-col justify-center">
+                <div className="flex items-center mb-3">
+                  <FaChartLine className="text-purple-500 text-3xl mr-4 flex-shrink-0" />
+                  <h3 className="text-xl font-semibold">Future CRM</h3>
+                </div>
+                <p className="text-gray-600">Triplan will evolve into a full-featured CRM for agencies.</p>
               </div>
-              <p className="text-gray-600">Triplan will evolve into a full-featured CRM for agencies.</p>
-            </div>
-
-            {/* Card 4: Product Hunt */}
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:scale-105 transition flex items-center justify-center">
-              <a
-                href="https://www.producthunt.com/products/triplan?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-triplan-3"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center"
-              >
-                <img
-                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1014431&theme=light&t=1757400067592"
-                  alt="Triplan - Smarter travel agency management | Product Hunt"
-                  width={160}
-                  height={34}
-                />
-              </a>
             </div>
           </div>
         </div>
