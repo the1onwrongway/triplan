@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Triplan ✈️
 
-## Getting Started
+> **Run Your Travel Agency Like a Pro**
 
-First, run the development server:
+Triplan is a modern, web-based platform designed specifically for travel agencies. It streamlines the process of creating beautiful, detailed trip itineraries, sharing them with clients, and managing agency operations. Triplan aims to evolve into a full-featured Customer Relationship Management (CRM) system for travel professionals.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌟 Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Create Beautiful Itineraries**: Build detailed and premium trip plans in minutes.
+- **Client Sharing**: Easily share itineraries with clients via web links.
+- **PDF Export**: Generate professional PDF versions of itineraries using integrated PDF tools.
+- **Dashboard & Analytics**: Track your agency's performance and operations.
+- **Vendor & Client Management**: Keep track of vendors and client profiles.
+- **Modern Tech Stack**: Built for speed and reliability.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Technology Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **UI/Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [Radix UI](https://www.radix-ui.com/)
+- **Backend & Auth**: [Supabase](https://supabase.com/) & [Firebase](https://firebase.google.com/)
+- **PDF Generation**: `jspdf`, `html2pdf.js`, `html2canvas`
+- **Icons**: `react-icons`, `lucide-react`
+- **Animations**: `tw-animate-css`
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app/` - Next.js App Router pages and layouts.
+  - `(protected)/` - Authenticated routes (Dashboard, Trips, Clients, Vendors, etc.)
+  - `login/` - Authentication pages
+  - `share_preview/` - Public facing itinerary sharing
+  - `waitlist/` - Landing page waitlist
+- `src/components/` - Reusable React components and UI elements.
+- `src/lib/` - Utility functions and shared libraries.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Getting Started
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Prerequisites
 
-## Deploy on Vercel
+- Node.js (v20+ recommended)
+- npm or yarn
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Installation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 📈 Roadmap
+
+- [x] Itinerary Creation & Sharing
+- [x] PDF Exports
+- [ ] Advanced CRM Capabilities
+- [ ] Vendor integrations and booking management
+
+## 📄 License
+
+This project is proprietary. All rights reserved.
